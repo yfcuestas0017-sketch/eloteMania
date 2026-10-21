@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Pencil, Plus, Power } from "lucide-react";
+import { Check, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import AppShell from "../components/AppShell";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { apiFetch } from "../services/api";
@@ -17,6 +17,7 @@ export default function AdminCategories() {
   const [vista, setVista] = useState("lista");
   const [editando, setEditando] = useState(null);
   const [aCambiar, setACambiar] = useState(null);
+  const [aEliminar, setAEliminar] = useState(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -117,25 +118,55 @@ export default function AdminCategories() {
     }
   }
 
+  async function eliminarCategoria() {
+    if (!aEliminar) return;
+    setCargando(true);
+
+    try {
+      await apiFetch(`/categories/${aEliminar.categoria_id}`, {
+        method: "DELETE"
+      });
+      setAEliminar(null);
+      await cargarCategorias();
+    } catch (err) {
+      setAEliminar(null);
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  }
+
   const dialogo = (
-    <ConfirmDialog
-      abierto={Boolean(aCambiar)}
-      titulo={
-        aCambiar?.activa
-          ? `¿Desactivar ${aCambiar?.nombre}?`
-          : `¿Activar ${aCambiar?.nombre}?`
-      }
-      texto={
-        aCambiar?.activa
-          ? "Dejará de mostrarse en el catálogo público junto con sus productos."
-          : "Volverá a mostrarse en el catálogo público."
-      }
-      confirmar={aCambiar?.activa ? "Sí, desactivar" : "Sí, activar"}
-      peligro={Boolean(aCambiar?.activa)}
-      cargando={cargando}
-      onConfirmar={confirmarCambioEstado}
-      onCancelar={() => setACambiar(null)}
-    />
+    <>
+      <ConfirmDialog
+        abierto={Boolean(aCambiar)}
+        titulo={
+          aCambiar?.activa
+            ? `¿Desactivar ${aCambiar?.nombre}?`
+            : `¿Activar ${aCambiar?.nombre}?`
+        }
+        texto={
+          aCambiar?.activa
+            ? "Dejará de mostrarse en el catálogo público junto con sus productos."
+            : "Volverá a mostrarse en el catálogo público."
+        }
+        confirmar={aCambiar?.activa ? "Sí, desactivar" : "Sí, activar"}
+        peligro={Boolean(aCambiar?.activa)}
+        cargando={cargando}
+        onConfirmar={confirmarCambioEstado}
+        onCancelar={() => setACambiar(null)}
+      />
+      <ConfirmDialog
+        abierto={Boolean(aEliminar)}
+        titulo={`¿Eliminar permanentemente ${aEliminar?.nombre || "la categoría"}?`}
+        texto="Esta acción no se puede deshacer. La categoría solo se eliminará si no tiene productos asociados."
+        confirmar="Eliminar permanentemente"
+        peligro
+        cargando={cargando}
+        onConfirmar={eliminarCategoria}
+        onCancelar={() => setAEliminar(null)}
+      />
+    </>
   );
 
   if (vista === "formulario") {
@@ -282,6 +313,15 @@ export default function AdminCategories() {
                         >
                           <Power size={16} />
                         </button>
+                        <button
+                          type="button"
+                          className="btn-icono es-rojo"
+                          onClick={() => setAEliminar(categoria)}
+                          aria-label={`Eliminar permanentemente ${categoria.nombre}`}
+                          title="Eliminar permanentemente"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -300,7 +340,7 @@ export default function AdminCategories() {
 
           <div className="tabla-pie">
             <span>{categorias.length} categorías</span>
-            <span>Acciones: editar · activar / desactivar</span>
+            <span>Acciones: editar · activar / desactivar · eliminar permanentemente</span>
           </div>
         </section>
       </div>

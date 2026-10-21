@@ -3,6 +3,7 @@ import {
   listarUsuarios,
   crearUsuario,
   cambiarEstadoUsuario,
+  eliminarUsuario,
   actualizarRolesUsuario,
   restablecerContrasena
 } from "../controllers/user.controller.js";
@@ -17,6 +18,7 @@ router.use(authenticate, authorize("ADMIN"));
 
 router.get("/", listarUsuarios);
 router.post("/", crearUsuario);
+router.delete("/:id", eliminarUsuario);
 router.patch("/:id/estado", cambiarEstadoUsuario);
 router.put("/:id/roles", actualizarRolesUsuario);
 router.put("/:id/password", restablecerContrasena);

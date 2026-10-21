@@ -188,6 +188,99 @@ export async function cambiarEstadoUsuario(req, res, next) {
   }
 }
 
+// DELETE /api/users/:id
+export async function eliminarUsuario(req, res, next) {
+  const id = Number(req.params.id);
+
+  if (!validarId(id)) {
+    return res.status(400).json({
+      ok: false,
+      message: "Identificador de usuario inválido."
+    });
+  }
+
+  if (id === req.user.usuario_id) {
+    return res.status(400).json({
+      ok: false,
+      message: "No puedes eliminar tu propia cuenta."
+    });
+  }
+
+  const cliente = await pool.connect();
+
+  try {
+    await cliente.query("BEGIN");
+
+    const usuario = await cliente.query(
+      `SELECT usuario_id
+       FROM usuarios
+       WHERE usuario_id = $1
+       FOR UPDATE`,
+      [id]
+    );
+
+    if (!usuario.rowCount) {
+      await cliente.query("ROLLBACK");
+      return res.status(404).json({
+        ok: false,
+        message: "Usuario no encontrado."
+      });
+    }
+
+    const esAdministrador = await cliente.query(
+      `SELECT 1
+       FROM usuario_roles ur
+       JOIN roles r ON r.rol_id = ur.rol_id
+       WHERE ur.usuario_id = $1 AND r.nombre = 'ADMIN'`,
+      [id]
+    );
+
+    if (esAdministrador.rowCount) {
+      const otrosAdministradores = await cliente.query(
+        `SELECT COUNT(*)::INTEGER AS cantidad
+         FROM usuario_roles ur
+         JOIN roles r ON r.rol_id = ur.rol_id
+         WHERE r.nombre = 'ADMIN' AND ur.usuario_id <> $1`,
+        [id]
+      );
+
+      if (otrosAdministradores.rows[0].cantidad === 0) {
+        await cliente.query("ROLLBACK");
+        return res.status(409).json({
+          ok: false,
+          message: "No puedes eliminar al último usuario administrador."
+        });
+      }
+    }
+
+    await cliente.query(
+      "DELETE FROM usuario_roles WHERE usuario_id = $1",
+      [id]
+    );
+    await cliente.query("DELETE FROM usuarios WHERE usuario_id = $1", [id]);
+    await cliente.query("COMMIT");
+
+    return res.json({
+      ok: true,
+      message: "Usuario eliminado permanentemente."
+    });
+  } catch (error) {
+    await cliente.query("ROLLBACK").catch(() => {});
+
+    if (error.code === "23503") {
+      return res.status(409).json({
+        ok: false,
+        message:
+          "No se puede eliminar este usuario porque tiene pedidos, pagos o movimientos de inventario asociados. Desactívalo para conservar el historial."
+      });
+    }
+
+    return next(error);
+  } finally {
+    cliente.release();
+  }
+}
+
 // PUT /api/users/:id/roles
 export async function actualizarRolesUsuario(req, res, next) {
   const id = Number(req.params.id);

@@ -192,8 +192,7 @@ export async function actualizarCategoria(req, res, next) {
   }
 }
 
-// DELETE /api/categorias/:id
-// Desactivación lógica, no borrado físico.
+// PATCH /api/categorias/:id/estado
 export async function desactivarCategoria(req, res, next) {
   try {
     const id = Number(req.params.id);
@@ -226,6 +225,63 @@ export async function desactivarCategoria(req, res, next) {
       categoria: result.rows[0]
     });
   } catch (error) {
+    next(error);
+  }
+}
+
+// DELETE /api/categorias/:id
+export async function eliminarCategoria(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Identificador de categoría inválido."
+      });
+    }
+
+    const productos = await query(
+      `SELECT COUNT(*)::INTEGER AS cantidad
+       FROM productos
+       WHERE categoria_id = $1`,
+      [id]
+    );
+
+    if (productos.rows[0].cantidad > 0) {
+      return res.status(409).json({
+        ok: false,
+        message:
+          "No se puede eliminar la categoría mientras tenga productos asociados. Reasigna o elimina esos productos primero."
+      });
+    }
+
+    const result = await query(
+      `DELETE FROM categorias
+       WHERE categoria_id = $1
+       RETURNING categoria_id, nombre`,
+      [id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({
+        ok: false,
+        message: "Categoría no encontrada."
+      });
+    }
+
+    res.json({
+      ok: true,
+      message: "Categoría eliminada permanentemente.",
+      categoria: result.rows[0]
+    });
+  } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        ok: false,
+        message: "No se puede eliminar esta categoría porque tiene registros asociados."
+      });
+    }
     next(error);
   }
 }

@@ -455,8 +455,7 @@ export async function actualizarProducto(req, res, next) {
   }
 }
 
-// DELETE /api/productos/:id
-// Desactivación lógica para conservar el historial.
+// PATCH /api/productos/:id/estado
 export async function desactivarProducto(req, res, next) {
   try {
     const id = Number(req.params.id);
@@ -491,6 +490,49 @@ export async function desactivarProducto(req, res, next) {
       producto: result.rows[0]
     });
   } catch (error) {
+    next(error);
+  }
+}
+
+// DELETE /api/productos/:id
+export async function eliminarProducto(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+
+    if (!validarId(id)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Identificador de producto inválido."
+      });
+    }
+
+    const result = await query(
+      `DELETE FROM productos
+       WHERE producto_id = $1
+       RETURNING producto_id, nombre`,
+      [id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({
+        ok: false,
+        message: "Producto no encontrado."
+      });
+    }
+
+    res.json({
+      ok: true,
+      message: "Producto eliminado permanentemente.",
+      producto: result.rows[0]
+    });
+  } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        ok: false,
+        message:
+          "No se puede eliminar permanentemente este producto porque tiene movimientos de inventario o adicionales asociados. Desactívalo para conservar el historial."
+      });
+    }
     next(error);
   }
 }

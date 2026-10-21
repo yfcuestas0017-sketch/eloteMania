@@ -41,6 +41,7 @@ export default function AdminProducts() {
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [aDesactivar, setADesactivar] = useState(null);
+  const [aEliminar, setAEliminar] = useState(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -213,7 +214,9 @@ export default function AdminProducts() {
     setCargando(true);
 
     try {
-      await apiFetch(`/products/${aDesactivar.producto_id}`, { method: "DELETE" });
+      await apiFetch(`/products/${aDesactivar.producto_id}/estado`, {
+        method: "PATCH"
+      });
       setADesactivar(null);
       if (vista === "formulario") volverALista();
       await cargarDatos();
@@ -225,21 +228,50 @@ export default function AdminProducts() {
     }
   }
 
+  async function eliminarProducto() {
+    if (!aEliminar) return;
+    setCargando(true);
+
+    try {
+      await apiFetch(`/products/${aEliminar.producto_id}`, { method: "DELETE" });
+      setAEliminar(null);
+      await cargarDatos();
+    } catch (err) {
+      setAEliminar(null);
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  }
+
   const nombreCategoria = (id) =>
     categorias.find((c) => String(c.categoria_id) === String(id))?.nombre || "Sin categoría";
 
   const dialogo = (
-    <ConfirmDialog
-      abierto={Boolean(aDesactivar)}
-      titulo={`¿Desactivar ${aDesactivar?.nombre || "el producto"}?`}
-      texto="Se retirará del catálogo y del punto de venta. Los pedidos anteriores conservarán su detalle."
-      confirmar="Sí, desactivar"
-      cancelar="Conservar"
-      peligro
-      cargando={cargando}
-      onConfirmar={desactivarProducto}
-      onCancelar={() => setADesactivar(null)}
-    />
+    <>
+      <ConfirmDialog
+        abierto={Boolean(aDesactivar)}
+        titulo={`¿Desactivar ${aDesactivar?.nombre || "el producto"}?`}
+        texto="Se retirará del catálogo y del punto de venta. Los pedidos anteriores conservarán su detalle."
+        confirmar="Sí, desactivar"
+        cancelar="Conservar"
+        peligro
+        cargando={cargando}
+        onConfirmar={desactivarProducto}
+        onCancelar={() => setADesactivar(null)}
+      />
+      <ConfirmDialog
+        abierto={Boolean(aEliminar)}
+        titulo={`¿Eliminar permanentemente ${aEliminar?.nombre || "el producto"}?`}
+        texto="Esta acción no se puede deshacer. Solo se eliminará si no tiene movimientos de inventario ni adicionales asociados."
+        confirmar="Eliminar permanentemente"
+        cancelar="Cancelar"
+        peligro
+        cargando={cargando}
+        onConfirmar={eliminarProducto}
+        onCancelar={() => setAEliminar(null)}
+      />
+    </>
   );
 
   /* ---------------- Formulario ---------------- */
@@ -710,6 +742,15 @@ export default function AdminProducts() {
                               <Trash2 size={16} />
                             </button>
                           )}
+                          <button
+                            type="button"
+                            className="btn-icono es-rojo"
+                            onClick={() => setAEliminar(producto)}
+                            aria-label={`Eliminar permanentemente ${producto.nombre}`}
+                            title="Eliminar permanentemente"
+                          >
+                            <Trash size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -733,7 +774,7 @@ export default function AdminProducts() {
             <span>
               Mostrando {filtrados.length} de {productos.length} productos
             </span>
-            <span>Acciones: editar información y stock · desactivar</span>
+            <span>Acciones: editar · desactivar · eliminar permanentemente</span>
           </div>
         </section>
       </div>

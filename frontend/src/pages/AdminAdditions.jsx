@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Check, Pencil, Plus, Power } from "lucide-react";
+import { Check, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import AppShell from "../components/AppShell";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { apiFetch } from "../services/api";
 import { pesos } from "../lib/formato";
 import "./admin.css";
@@ -17,6 +18,7 @@ export default function AdminAdditions() {
   const [productos, setProductos] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
   const [editando, setEditando] = useState(null);
+  const [aEliminar, setAEliminar] = useState(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -129,6 +131,25 @@ export default function AdminAdditions() {
       await cargarDatos();
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function eliminarAdicional() {
+    if (!aEliminar) return;
+    setCargando(true);
+    setError("");
+
+    try {
+      await apiFetch(`/additions/${aEliminar.adicional_id}`, {
+        method: "DELETE"
+      });
+      setAEliminar(null);
+      await cargarDatos();
+    } catch (err) {
+      setAEliminar(null);
+      setError(err.message);
+    } finally {
+      setCargando(false);
     }
   }
 
@@ -295,6 +316,15 @@ export default function AdminAdditions() {
                         >
                           <Power size={16} />
                         </button>
+                        <button
+                          type="button"
+                          className="btn-icono es-rojo"
+                          onClick={() => setAEliminar(adicional)}
+                          aria-label={`Eliminar permanentemente ${adicional.nombre}`}
+                          title="Eliminar permanentemente"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -312,6 +342,16 @@ export default function AdminAdditions() {
           <div className="tabla-pie">{adicionales.length} adicionales</div>
         </section>
       </div>
+      <ConfirmDialog
+        abierto={Boolean(aEliminar)}
+        titulo={`¿Eliminar permanentemente ${aEliminar?.nombre || "el adicional"}?`}
+        texto="Esta acción no se puede deshacer. Los pedidos anteriores conservarán el nombre y precio registrados."
+        confirmar="Eliminar permanentemente"
+        peligro
+        cargando={cargando}
+        onConfirmar={eliminarAdicional}
+        onCancelar={() => setAEliminar(null)}
+      />
     </AppShell>
   );
 }

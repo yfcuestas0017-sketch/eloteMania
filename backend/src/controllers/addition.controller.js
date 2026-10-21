@@ -218,8 +218,7 @@ export async function eliminarAdicional(req, res, next) {
 
   try {
     const resultado = await query(
-      `UPDATE adicionales
-       SET activo = FALSE
+      `DELETE FROM adicionales
        WHERE adicional_id = $1
        RETURNING adicional_id`,
       [id]
@@ -227,8 +226,14 @@ export async function eliminarAdicional(req, res, next) {
     if (!resultado.rowCount) {
       return res.status(404).json({ mensaje: "Adicional no encontrado." });
     }
-    return res.json({ mensaje: "Adicional desactivado correctamente." });
+    return res.json({ mensaje: "Adicional eliminado permanentemente." });
   } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        mensaje:
+          "No se puede eliminar este adicional porque tiene registros asociados. Desactívalo para conservar el historial."
+      });
+    }
     return next(error);
   }
 }

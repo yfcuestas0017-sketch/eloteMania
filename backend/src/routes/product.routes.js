@@ -5,7 +5,8 @@ import {
   listarProductosAdmin,
   crearProducto,
   actualizarProducto,
-  desactivarProducto
+  desactivarProducto,
+  eliminarProducto
 } from "../controllers/product.controller.js";
 import {
   authenticate,
@@ -41,6 +42,13 @@ router.put(
 
 router.delete(
   "/:id",
+  authenticate,
+  authorize("ADMIN"),
+  eliminarProducto
+);
+
+router.patch(
+  "/:id/estado",
   authenticate,
   authorize("ADMIN"),
   desactivarProducto

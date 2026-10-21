@@ -5,7 +5,8 @@ import {
   listarTodasCategorias,
   crearCategoria,
   actualizarCategoria,
-  desactivarCategoria
+  desactivarCategoria,
+  eliminarCategoria
 } from "../controllers/category.controller.js";
 import {
   authenticate,
@@ -41,6 +42,13 @@ router.put(
 
 router.delete(
   "/:id",
+  authenticate,
+  authorize("ADMIN"),
+  eliminarCategoria
+);
+
+router.patch(
+  "/:id/estado",
   authenticate,
   authorize("ADMIN"),
   desactivarCategoria

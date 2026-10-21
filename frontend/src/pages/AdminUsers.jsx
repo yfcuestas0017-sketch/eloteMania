@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Pencil, Power, Search, ShieldCheck, UserPlus } from "lucide-react";
+import { Check, Pencil, Power, Search, ShieldCheck, Trash2, UserPlus } from "lucide-react";
 import AppShell from "../components/AppShell";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { apiFetch } from "../services/api";
@@ -45,6 +45,7 @@ export default function AdminUsers() {
   const [filtroRol, setFiltroRol] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [aCambiar, setACambiar] = useState(null);
+  const [aEliminar, setAEliminar] = useState(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -209,25 +210,53 @@ export default function AdminUsers() {
     }
   }
 
+  async function eliminarUsuario() {
+    if (!aEliminar) return;
+    setCargando(true);
+
+    try {
+      await apiFetch(`/users/${aEliminar.usuario_id}`, { method: "DELETE" });
+      setAEliminar(null);
+      await cargarUsuarios();
+    } catch (err) {
+      setAEliminar(null);
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  }
+
   const dialogo = (
-    <ConfirmDialog
-      abierto={Boolean(aCambiar)}
-      titulo={
-        aCambiar?.activo
-          ? `¿Desactivar a ${aCambiar?.nombres}?`
-          : `¿Activar a ${aCambiar?.nombres}?`
-      }
-      texto={
-        aCambiar?.activo
-          ? "Suspende su acceso sin perder el historial de ventas."
-          : "Podrá volver a iniciar sesión con su usuario y contraseña."
-      }
-      confirmar={aCambiar?.activo ? "Sí, desactivar" : "Sí, activar"}
-      peligro={Boolean(aCambiar?.activo)}
-      cargando={cargando}
-      onConfirmar={confirmarCambioEstado}
-      onCancelar={() => setACambiar(null)}
-    />
+    <>
+      <ConfirmDialog
+        abierto={Boolean(aCambiar)}
+        titulo={
+          aCambiar?.activo
+            ? `¿Desactivar a ${aCambiar?.nombres}?`
+            : `¿Activar a ${aCambiar?.nombres}?`
+        }
+        texto={
+          aCambiar?.activo
+            ? "Suspende su acceso sin perder el historial de ventas."
+            : "Podrá volver a iniciar sesión con su usuario y contraseña."
+        }
+        confirmar={aCambiar?.activo ? "Sí, desactivar" : "Sí, activar"}
+        peligro={Boolean(aCambiar?.activo)}
+        cargando={cargando}
+        onConfirmar={confirmarCambioEstado}
+        onCancelar={() => setACambiar(null)}
+      />
+      <ConfirmDialog
+        abierto={Boolean(aEliminar)}
+        titulo={`¿Eliminar permanentemente a ${aEliminar?.nombres || "este usuario"}?`}
+        texto="Esta acción no se puede deshacer. No se puede eliminar tu propia cuenta, al último administrador ni usuarios asociados a ventas o inventario."
+        confirmar="Eliminar permanentemente"
+        peligro
+        cargando={cargando}
+        onConfirmar={eliminarUsuario}
+        onCancelar={() => setAEliminar(null)}
+      />
+    </>
   );
 
   /* ---------------- Formulario ---------------- */
@@ -600,6 +629,15 @@ export default function AdminUsers() {
                         >
                           <Power size={16} />
                         </button>
+                        <button
+                          type="button"
+                          className="btn-icono es-rojo"
+                          onClick={() => setAEliminar(usuario)}
+                          aria-label={`Eliminar permanentemente a ${usuario.nombres}`}
+                          title="Eliminar permanentemente"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -622,7 +660,7 @@ export default function AdminUsers() {
             <span>
               Mostrando {filtrados.length} de {usuarios.length} usuarios
             </span>
-            <span>Acciones: editar · activar / desactivar</span>
+            <span>Acciones: editar · activar / desactivar · eliminar permanentemente</span>
           </div>
         </section>
       </div>
