@@ -1,0 +1,95 @@
+.productos-admin {
+  padding: 28px;
+  color: #202020;
+}
+
+.productos-formulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 900px;
+  margin: 25px 0;
+  padding: 24px;
+  border: 1px solid #e1e1e1;
+  border-radius: 12px;
+  background: white;
+}
+
+.productos-formulario h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.productos-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.productos-formulario input,
+.productos-formulario textarea,
+.productos-formulario select {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+}
+
+.productos-formulario textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.productos-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+}
+
+.productos-acciones button,
+.productos-listado button {
+  padding: 9px 13px;
+  margin: 3px;
+  border: 0;
+  border-radius: 6px;
+  background: #202020;
+  color: white;
+}
+
+.productos-listado {
+  padding: 22px;
+  border: 1px solid #e1e1e1;
+  border-radius: 12px;
+  background: white;
+}
+
+.productos-tabla-contenedor {
+  overflow-x: auto;
+}
+
+.productos-listado table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.productos-listado th,
+.productos-listado td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.productos-error {
+  color: #b00020;
+}
+
+@media (max-width: 650px) {
+  .productos-formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .productos-formulario h2,
+  .productos-acciones {
+    grid-column: auto;
+  }
+}

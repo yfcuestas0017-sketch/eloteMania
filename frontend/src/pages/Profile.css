@@ -1,0 +1,91 @@
+.perfil-rejilla {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.perfil-formularios {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.perfil-resumen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.perfil-resumen h2 {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.perfil-resumen .lista-datos {
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--linea);
+  text-align: left;
+}
+
+.perfil-avatar {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--crema);
+  color: var(--rojo);
+}
+
+.perfil-roles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.perfil-titulo-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.perfil-ver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+}
+
+.aviso-exito {
+  background: var(--verde-suave);
+  border: 1px solid #bfe0c8;
+  color: var(--verde);
+}
+
+@media (max-width: 1080px) {
+  .perfil-rejilla {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .perfil-resumen {
+    align-items: stretch;
+  }
+
+  .perfil-roles {
+    justify-content: center;
+  }
+
+  .formulario-pie .acciones,
+  .formulario-pie .acciones .btn {
+    width: 100%;
+  }
+}

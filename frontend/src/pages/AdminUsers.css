@@ -1,0 +1,107 @@
+.roles-celda {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.seccion-clave {
+  padding-top: 18px;
+  border-top: 1px solid var(--linea);
+}
+
+.seccion-clave p {
+  margin-top: 4px;
+}
+
+fieldset.roles {
+  margin: 0;
+  min-width: 0;
+}
+
+fieldset.roles legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 0;
+}
+
+fieldset.roles legend + * {
+  clear: both;
+}
+
+.rol-opcion {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ease-salida),
+    background-color 160ms var(--ease-salida);
+}
+
+.rol-opcion:hover {
+  border-color: #d6ccbd;
+}
+
+.rol-opcion input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rol-opcion i {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1.5px solid #c9c0b3;
+  border-radius: 50%;
+  background: #fff;
+  transition:
+    border-color 160ms var(--ease-salida),
+    box-shadow 160ms var(--ease-salida);
+}
+
+.rol-opcion span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rol-opcion strong {
+  font-size: 14px;
+}
+
+.rol-opcion small {
+  color: var(--apagado);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.rol-opcion.activo {
+  border-color: var(--rojo);
+  background: var(--rojo-suave);
+}
+
+.rol-opcion.activo i {
+  border-color: var(--rojo);
+  box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 9px var(--rojo);
+}
+
+.rol-opcion:has(input:focus-visible) {
+  outline: 2px solid var(--rojo);
+  outline-offset: 2px;
+}
+
+.sin-permisos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--rojo);
+  font-size: 12px;
+  font-weight: 700;
+}

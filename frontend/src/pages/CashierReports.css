@@ -1,0 +1,55 @@
+.caja-botones-rapidos {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.caja-comprobante-tag {
+  color: var(--apagado);
+  font-size: 11px;
+}
+
+.caja-resumen-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 280px;
+  font-size: 12px;
+}
+
+.caja-item-linea {
+  line-height: 1.3;
+}
+
+.caja-item-obs {
+  display: block;
+  color: var(--apagado);
+  font-style: italic;
+  font-size: 11px;
+}
+
+.chip-pago {
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  font-weight: 600;
+}
+
+.btn-voucher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.btn-voucher:hover {
+  background: var(--crema);
+  border-color: var(--ambar);
+  color: var(--tinta);
+}
+

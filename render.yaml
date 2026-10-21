@@ -1,0 +1,34 @@
+# Blueprint de Render para el backend de EloteMania.
+# Uso: Render > New > Blueprint > selecciona tu repositorio.
+services:
+  - type: web
+    name: elotemania-api
+    runtime: node
+    region: virginia          # la más cercana a Colombia; ponla igual que la región de Neon
+    plan: free                # cambia a "starter" para que no se duerma
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: JWT_SECRET
+        generateValue: true   # Render crea uno aleatorio y seguro
+      - key: DATABASE_URL
+        sync: false           # lo pegas tú en el panel (cadena de Neon)
+      - key: FRONTEND_URL
+        sync: false           # la URL de Vercel, sin "/" final
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: elotemania

@@ -1,0 +1,721 @@
+/* ==========================================================
+   Elote Manía · sistema de diseño
+   Tokens tomados de los mockups de Figma.
+   ========================================================== */
+
+:root {
+  --rojo: #d50918;
+  --rojo-oscuro: #b50714;
+  --rojo-suave: #fdeaea;
+  --rojo-borde: #f3b3ae;
+  --crema: #fff1cd;
+  --papel: #f8f5ef;
+  --blanco: #ffffff;
+  --tinta: #29221f;
+  --apagado: #786f66;
+  --linea: #e7e0d6;
+  --oscuro: #241f1c;
+  --verde: #267049;
+  --verde-suave: #eaf5ec;
+  --ambar: #8a5a00;
+
+  --fuente-titulo: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --fuente-texto: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radio-s: 8px;
+  --radio-m: 12px;
+  --radio-l: 20px;
+
+  --ease-salida: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: var(--fuente-texto);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--tinta);
+  background: var(--papel);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--rojo);
+  outline-offset: 2px;
+}
+
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--blanco);
+  color: var(--tinta);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 160ms var(--ease-salida),
+    border-color 160ms var(--ease-salida),
+    transform 120ms var(--ease-salida);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primario,
+.btn-peligro {
+  background: var(--rojo);
+  border-color: var(--rojo);
+  color: #fff;
+}
+
+@media (hover: hover) {
+  .btn-secundario:hover:not(:disabled) {
+    border-color: #d6ccbd;
+    background: #fffdf9;
+  }
+
+  .btn-primario:hover:not(:disabled),
+  .btn-peligro:hover:not(:disabled) {
+    background: var(--rojo-oscuro);
+    border-color: var(--rojo-oscuro);
+  }
+}
+
+.btn-bloque {
+  width: 100%;
+}
+
+.btn-chico {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.btn-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--rojo);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.btn-enlace:hover {
+  text-decoration: underline;
+}
+
+.btn-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--apagado);
+  transition:
+    background-color 160ms var(--ease-salida),
+    color 160ms var(--ease-salida),
+    transform 120ms var(--ease-salida);
+}
+
+.btn-icono:hover {
+  background: var(--papel);
+  color: var(--tinta);
+}
+
+.btn-icono:active {
+  transform: scale(0.92);
+}
+
+.btn-icono.es-rojo {
+  color: var(--rojo);
+}
+
+.btn-icono.es-rojo:hover {
+  background: var(--rojo-suave);
+}
+
+/* ---------- Tarjetas ---------- */
+
+.tarjeta {
+  background: var(--blanco);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  padding: 20px;
+}
+
+.tarjeta-crema {
+  background: var(--crema);
+  border-color: #f4e2b4;
+}
+
+.tarjeta-titulo {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.tarjeta > .tarjeta-titulo + .tabla-contenedor {
+  margin-top: 16px;
+}
+
+/* ---------- Etiquetas de estado ---------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 100px;
+  background: var(--papel);
+  color: var(--apagado);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip-verde {
+  background: var(--verde-suave);
+  color: var(--verde);
+}
+
+.chip-ambar {
+  background: var(--crema);
+  color: var(--ambar);
+}
+
+.chip-rojo {
+  background: var(--rojo-suave);
+  color: var(--rojo);
+}
+
+/* ---------- Encabezado de página ---------- */
+
+.pagina-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.pagina-titulo {
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.pagina-sub {
+  margin-top: 6px;
+  color: var(--apagado);
+  font-size: 14px;
+}
+
+.pagina-pastillas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+/* ---------- Formularios ---------- */
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.campo > label,
+.campo > .campo-etiqueta {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.campo-ayuda {
+  color: var(--apagado);
+  font-size: 12px;
+}
+
+.entrada,
+.seleccion,
+.area-texto {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--blanco);
+  color: var(--tinta);
+  font-size: 14px;
+  transition:
+    border-color 160ms var(--ease-salida),
+    box-shadow 160ms var(--ease-salida);
+}
+
+.entrada::placeholder,
+.area-texto::placeholder {
+  color: #a69d93;
+}
+
+.entrada:hover,
+.seleccion:hover,
+.area-texto:hover {
+  border-color: #d6ccbd;
+}
+
+.entrada:focus,
+.seleccion:focus,
+.area-texto:focus {
+  outline: none;
+  border-color: var(--rojo);
+  box-shadow: 0 0 0 3px rgba(213, 9, 24, 0.12);
+}
+
+.entrada:disabled,
+.seleccion:disabled {
+  background: var(--papel);
+  color: var(--apagado);
+  cursor: not-allowed;
+}
+
+.area-texto {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.seleccion {
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2329221f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.busqueda {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.busqueda > svg {
+  position: absolute;
+  left: 14px;
+  color: var(--apagado);
+  pointer-events: none;
+}
+
+.busqueda .entrada {
+  padding-left: 42px;
+}
+
+.rejilla-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.formulario-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid var(--linea);
+}
+
+.formulario-pie .acciones {
+  display: flex;
+  gap: 10px;
+}
+
+/* ---------- Tablas ---------- */
+
+.tabla-contenedor {
+  overflow-x: auto;
+}
+
+.tabla th {
+  padding: 11px 12px;
+  background: var(--papel);
+  color: var(--apagado);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabla th:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.tabla th:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.tabla td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabla .num {
+  text-align: right;
+}
+
+.tabla .acciones {
+  display: flex;
+  gap: 2px;
+}
+
+.celda-producto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.celda-producto strong,
+.celda-doble strong {
+  display: block;
+  font-size: 13px;
+}
+
+.celda-producto small,
+.celda-doble small {
+  display: block;
+  margin-top: 2px;
+  color: var(--apagado);
+  font-size: 11px;
+}
+
+.miniatura {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--crema);
+}
+
+.tabla-pie {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  color: var(--apagado);
+  font-size: 12px;
+}
+
+.vacio {
+  padding: 36px 16px;
+  color: var(--apagado);
+  text-align: center;
+}
+
+/* ---------- Avisos ---------- */
+
+.aviso {
+  padding: 12px 16px;
+  border-radius: var(--radio-s);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.aviso-error {
+  background: var(--rojo-suave);
+  border: 1px solid #f6caca;
+  color: #9d0a14;
+}
+
+/* ---------- Tarjetas de cifras ---------- */
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.cifra {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  background: var(--blanco);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+}
+
+.cifra > span {
+  color: var(--apagado);
+  font-size: 13px;
+}
+
+.cifra > strong {
+  font-family: var(--fuente-titulo);
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.cifra > small {
+  color: var(--verde);
+  font-size: 12px;
+}
+
+/* ---------- Diálogo de confirmación ---------- */
+
+.dialogo {
+  width: min(440px, calc(100vw - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-m);
+  background: var(--blanco);
+  color: var(--tinta);
+  box-shadow: 0 24px 60px rgba(41, 34, 31, 0.25);
+}
+
+.dialogo::backdrop {
+  background: rgba(36, 31, 28, 0.5);
+}
+
+.dialogo[open] {
+  animation: dialogo-entra 180ms var(--ease-salida);
+}
+
+.dialogo-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+}
+
+.dialogo-cuerpo h2 {
+  font-size: 20px;
+}
+
+.dialogo-cuerpo p {
+  color: var(--apagado);
+  line-height: 1.5;
+}
+
+.dialogo-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@keyframes dialogo-entra {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .pagina-titulo {
+    font-size: 28px;
+  }
+
+  .rejilla-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Impresión ---------- */
+
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+}
+
+/* ---------- Ajustes responsivos generales ---------- */
+
+img,
+svg {
+  max-width: 100%;
+}
+
+.pagina-cabecera {
+  flex-wrap: wrap;
+}
+
+.tabla-contenedor {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 960px) {
+  .shell-contenido,
+  .pagina {
+    min-width: 0;
+  }
+
+  .herramientas .busqueda,
+  .herramientas .seleccion {
+    flex: 1 1 100%;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  /* 16 px evita el zoom automático de iOS al enfocar un campo. */
+  .entrada,
+  .seleccion,
+  .area-texto,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+
+  .pagina-cabecera > .btn,
+  .pagina-cabecera > a.btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .formulario-pie {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .formulario-pie .acciones {
+    flex-direction: column-reverse;
+  }
+
+  .formulario-pie .acciones .btn {
+    width: 100%;
+  }
+
+  .franja-peligro .acciones {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .shell-barra .chip {
+    font-size: 11px;
+    padding: 0 8px;
+  }
+
+  .tarjeta {
+    padding: 16px;
+  }
+}

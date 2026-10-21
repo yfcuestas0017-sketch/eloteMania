@@ -1,0 +1,153 @@
+.resumen-fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--blanco);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.resumen-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.resumen-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ---------- Gráfica de barras ---------- */
+
+.barras {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  height: 220px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barras li {
+  flex: 0 1 120px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 8px;
+  text-align: center;
+}
+
+.barras-valor {
+  color: var(--apagado);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.barras-barra {
+  display: block;
+  border-radius: 6px 6px 0 0;
+  background: var(--rojo-borde);
+  transform-origin: bottom;
+  animation: barra-crece 520ms var(--ease-salida) both;
+}
+
+.barras-barra.lider {
+  background: var(--rojo);
+}
+
+.barras-nombre {
+  overflow: hidden;
+  padding-top: 8px;
+  border-top: 1px solid var(--linea);
+  color: var(--apagado);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes barra-crece {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* ---------- Despacho ---------- */
+
+.resumen-despacho {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.resumen-despacho-cifra {
+  font-family: var(--fuente-titulo);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.resumen-despacho-texto {
+  color: var(--apagado);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.resumen-despacho .btn {
+  margin-top: auto;
+}
+
+/* ---------- Atajos ---------- */
+
+.atajo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color 160ms var(--ease-salida),
+    background-color 160ms var(--ease-salida);
+}
+
+.atajo svg:first-child {
+  color: var(--rojo);
+}
+
+.atajo svg:last-child {
+  margin-left: auto;
+  color: var(--apagado);
+}
+
+.atajo:hover {
+  border-color: #d6ccbd;
+  background: #fffdf9;
+}
+
+@media (max-width: 1080px) {
+  .resumen-fila {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .barras {
+    gap: 8px;
+  }
+}
