@@ -538,8 +538,8 @@ export default function AdminUsers() {
             </select>
           </div>
 
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="tabla-contenedor tabla-tarjetas-contenedor">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Usuario</th>
@@ -552,7 +552,7 @@ export default function AdminUsers() {
               <tbody>
                 {filtrados.map((usuario) => (
                   <tr key={usuario.usuario_id}>
-                    <td>
+                    <td className="celda-titulo">
                       <div className="celda-doble">
                         <strong>
                           {usuario.nombres} {usuario.apellidos}
@@ -563,7 +563,7 @@ export default function AdminUsers() {
                         </small>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Rol">
                       <div className="roles-celda">
                         {(usuario.roles || []).map((rol) => (
                           <span
@@ -575,12 +575,12 @@ export default function AdminUsers() {
                         ))}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       <span className={`chip ${usuario.activo ? "chip-verde" : ""}`}>
                         {usuario.activo ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td>
+                    <td className="celda-acciones">
                       <div className="acciones">
                         <button
                           type="button"

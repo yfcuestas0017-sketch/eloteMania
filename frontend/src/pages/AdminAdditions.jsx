@@ -247,8 +247,8 @@ export default function AdminAdditions() {
         </form>
 
         <section className="tarjeta">
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="tabla-contenedor tabla-tarjetas-contenedor">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Adicional</th>
@@ -261,21 +261,21 @@ export default function AdminAdditions() {
               <tbody>
                 {adicionales.map((adicional) => (
                   <tr key={adicional.adicional_id}>
-                    <td><strong>{adicional.nombre}</strong></td>
-                    <td>{pesos(adicional.precio)}</td>
-                    <td>
+                    <td className="celda-titulo"><strong>{adicional.nombre}</strong></td>
+                    <td data-label="Precio">{pesos(adicional.precio)}</td>
+                    <td data-label="Productos asociados" className="celda-bloque">
                       {adicional.productos
                         .map((producto) => producto.nombre)
                         .join(", ") || "Sin productos"}
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       <span
                         className={`chip ${adicional.activo ? "chip-verde" : "chip-ambar"}`}
                       >
                         {adicional.activo ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td>
+                    <td className="celda-acciones">
                       <div className="acciones">
                         <button
                           type="button"

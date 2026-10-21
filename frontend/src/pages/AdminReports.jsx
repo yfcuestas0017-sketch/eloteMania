@@ -18,6 +18,7 @@ import ComprobanteModal from "../components/ComprobanteModal";
 import { fechaLocal, pesos } from "../lib/formato";
 import { apiFetch } from "../services/api";
 import "./admin.css";
+import "./CashierReports.css";
 import "./AdminReports.css";
 
 function formatoFecha(fecha) {
@@ -158,15 +159,7 @@ export default function AdminReports() {
 
         {/* Filtros de fecha y selector de cajero */}
         <section className="tarjeta no-imprimir">
-          <form
-            onSubmit={consultar}
-            style={{
-              display: "flex",
-              gap: 16,
-              flexWrap: "wrap",
-              alignItems: "flex-end"
-            }}
-          >
+          <form onSubmit={consultar} className="filtros-reporte">
             <div className="campo">
               <label htmlFor="r-desde">Desde</label>
               <input
@@ -194,7 +187,7 @@ export default function AdminReports() {
               />
             </div>
 
-            <div className="campo" style={{ minWidth: 200 }}>
+            <div className="campo campo-cajero">
               <label htmlFor="r-cajero">Filtrar por cajero</label>
               <select
                 id="r-cajero"
@@ -334,7 +327,7 @@ export default function AdminReports() {
           {/* GRÁFICA 1: VENTAS POR CAJERO (CON INTERACCIÓN AL DAR CLICK) */}
           <section className="tarjeta">
             <div className="tarjeta-cabecera-accion">
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="cabecera-acciones-lado">
                 <Users size={20} color="#d50918" aria-hidden="true" />
                 <h2 className="tarjeta-titulo">Ventas por cada cajero</h2>
               </div>
@@ -421,8 +414,8 @@ export default function AdminReports() {
 
             {/* Tabla complementaria con filas clickeables */}
             {cajeros.length > 0 && (
-              <div className="tabla-contenedor" style={{ marginTop: 20 }}>
-                <table className="tabla">
+              <div className="tabla-contenedor tabla-tarjetas-contenedor" style={{ marginTop: 20 }}>
+                <table className="tabla tabla-tarjetas">
                   <thead>
                     <tr>
                       <th>Cajero</th>
@@ -442,19 +435,19 @@ export default function AdminReports() {
                           className={`fila-tabla-clickeable ${activa ? "activa" : ""}`}
                           onClick={() => alternarCajero(cajero)}
                         >
-                          <td>
+                          <td className="celda-titulo">
                             <strong>
                               {cajero.nombres} {cajero.apellidos}
                             </strong>
                           </td>
-                          <td className="num">{cajero.cantidad_ventas}</td>
-                          <td className="num">{pesos(cajero.total_recaudado)}</td>
-                          <td className="num">
+                          <td className="num" data-label="Ventas">{cajero.cantidad_ventas}</td>
+                          <td className="num" data-label="Recaudo">{pesos(cajero.total_recaudado)}</td>
+                          <td className="num" data-label="Participación">
                             {totalGeneralCajeros > 0
                               ? `${Math.round((Number(cajero.total_recaudado) / totalGeneralCajeros) * 100)}%`
                               : "—"}
                           </td>
-                          <td className="num">
+                          <td className="num celda-acciones">
                             <button
                               type="button"
                               className={`btn btn-sm ${activa ? "btn-primario" : "btn-secundario"}`}
@@ -478,7 +471,7 @@ export default function AdminReports() {
           {/* GRÁFICA 2: PRODUCTOS MÁS VENDIDOS */}
           <section className="tarjeta">
             <div className="tarjeta-cabecera-accion">
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="cabecera-acciones-lado">
                 <Flame size={20} color="#ea580c" aria-hidden="true" />
                 <h2 className="tarjeta-titulo">
                   {cajeroSeleccionado
@@ -587,7 +580,7 @@ export default function AdminReports() {
                   : `Consulta los pedidos de cualquier cajero y reimprime su voucher.`}
               </p>
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div className="cabecera-acciones-lado">
               {cajeroSeleccionado && (
                 <button
                   type="button"
@@ -602,8 +595,8 @@ export default function AdminReports() {
             </div>
           </div>
 
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="tabla-contenedor tabla-tarjetas-contenedor">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Pedido / Comprobante</th>
@@ -618,7 +611,7 @@ export default function AdminReports() {
               <tbody>
                 {pedidosRecientes.map((pedido) => (
                   <tr key={pedido.venta_id}>
-                    <td>
+                    <td className="celda-titulo">
                       <div>
                         <strong>{pedido.numero_pedido}</strong>
                         <br />
@@ -627,10 +620,10 @@ export default function AdminReports() {
                         </small>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Fecha y hora">
                       <span>{formatoFecha(pedido.fecha_venta)}</span>
                     </td>
-                    <td>
+                    <td data-label="Cajero">
                       <button
                         type="button"
                         className="btn-enlace"
@@ -654,7 +647,7 @@ export default function AdminReports() {
                         {pedido.cajero}
                       </button>
                     </td>
-                    <td>
+                    <td data-label="Productos vendidos" className="celda-bloque">
                       <div className="caja-resumen-productos">
                         {pedido.productos && pedido.productos.length > 0 ? (
                           pedido.productos.map((prod, idx) => (
@@ -670,13 +663,13 @@ export default function AdminReports() {
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Método">
                       <span className="chip chip-pago">{pedido.metodo_pago}</span>
                     </td>
-                    <td className="num">
+                    <td className="num" data-label="Total">
                       <strong>{pesos(pedido.total)}</strong>
                     </td>
-                    <td className="num">
+                    <td className="num celda-acciones">
                       <button
                         type="button"
                         className="btn btn-secundario btn-sm btn-voucher"

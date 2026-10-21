@@ -105,3 +105,9 @@ fieldset.roles legend + * {
   font-size: 12px;
   font-weight: 700;
 }
+
+@media (max-width: 720px) {
+  .roles-celda {
+    justify-content: flex-end;
+  }
+}

@@ -234,8 +234,8 @@ export default function AdminCategories() {
         {error && <p className="aviso aviso-error" role="alert">{error}</p>}
 
         <section className="tarjeta">
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="tabla-contenedor tabla-tarjetas-contenedor">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Nombre</th>
@@ -249,20 +249,20 @@ export default function AdminCategories() {
               <tbody>
                 {categorias.map((categoria) => (
                   <tr key={categoria.categoria_id}>
-                    <td>
+                    <td className="celda-titulo">
                       <div className="celda-doble">
                         <strong>{categoria.nombre}</strong>
                         {categoria.descripcion && <small>{categoria.descripcion}</small>}
                       </div>
                     </td>
-                    <td>{categoria.cantidad_productos ?? 0}</td>
-                    <td>{categoria.orden_visualizacion}</td>
-                    <td>
+                    <td data-label="Productos">{categoria.cantidad_productos ?? 0}</td>
+                    <td data-label="Orden">{categoria.orden_visualizacion}</td>
+                    <td data-label="Estado">
                       <span className={`chip ${categoria.activa ? "chip-verde" : ""}`}>
                         {categoria.activa ? "Activa" : "Inactiva"}
                       </span>
                     </td>
-                    <td>
+                    <td className="celda-acciones">
                       <div className="acciones">
                         <button
                           type="button"

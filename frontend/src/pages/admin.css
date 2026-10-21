@@ -224,3 +224,49 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Celular y tableta pequeña ---------- */
+
+@media (max-width: 720px) {
+  .pagina {
+    gap: 18px;
+  }
+
+  .pagina-pastillas {
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .pagina-pastillas .campo-ayuda {
+    flex: 1 1 100%;
+  }
+
+  .herramientas {
+    margin-bottom: 14px;
+  }
+
+  .herramientas .busqueda {
+    max-width: none;
+  }
+
+  .formulario-principal,
+  .formulario-lateral {
+    gap: 16px;
+  }
+
+  .formulario-principal[style] {
+    max-width: none !important;
+  }
+
+  .interruptor {
+    min-height: 48px;
+  }
+
+  .franja-peligro {
+    padding: 16px;
+  }
+
+  .lista-datos > div {
+    flex-wrap: wrap;
+  }
+}

@@ -719,3 +719,148 @@ svg {
     padding: 16px;
   }
 }
+
+/* ==========================================================
+   Tablas → tarjetas en celular
+   Se activa con <table className="tabla tabla-tarjetas"> y
+   atributos data-label en cada <td>. En pantallas grandes la
+   tabla se ve igual que siempre.
+   ========================================================== */
+
+@media (max-width: 720px) {
+  .tabla-tarjetas-contenedor {
+    overflow-x: visible;
+  }
+
+  .tabla.tabla-tarjetas,
+  .tabla.tabla-tarjetas tbody {
+    display: block;
+    width: 100%;
+  }
+
+  /* Los encabezados se ocultan visualmente; cada celda lleva su etiqueta. */
+  .tabla.tabla-tarjetas thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .tabla.tabla-tarjetas tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+    padding: 6px 14px 10px;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-m);
+    background: var(--blanco);
+  }
+
+  .tabla.tabla-tarjetas tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .tabla.tabla-tarjetas tbody tr.activa {
+    border-color: var(--rojo);
+    background: var(--rojo-suave);
+  }
+
+  .tabla.tabla-tarjetas tbody tr td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--linea);
+    text-align: right;
+  }
+
+  .tabla.tabla-tarjetas tbody tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .tabla.tabla-tarjetas tbody tr td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    color: var(--apagado);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  /* Celda principal: nombre del registro, sin etiqueta. */
+  .tabla.tabla-tarjetas tbody tr td.celda-titulo {
+    display: block;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--linea);
+    text-align: left;
+  }
+
+  .tabla.tabla-tarjetas td.celda-titulo .celda-producto {
+    min-width: 0;
+  }
+
+  /* Valores largos: etiqueta arriba, contenido debajo. */
+  .tabla.tabla-tarjetas tbody tr td.celda-bloque {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    text-align: left;
+  }
+
+  .tabla.tabla-tarjetas tbody tr td.celda-bloque::before {
+    max-width: none;
+  }
+
+  /* Acciones: ocupan todo el ancho de la tarjeta y son fáciles de tocar. */
+  .tabla.tabla-tarjetas tbody tr td.celda-acciones {
+    display: block;
+    padding: 10px 0 0;
+    border-bottom: 0;
+  }
+
+  .tabla.tabla-tarjetas td.celda-acciones .acciones {
+    display: flex;
+    gap: 8px;
+  }
+
+  .tabla.tabla-tarjetas td.celda-acciones .btn-icono {
+    flex: 1;
+    width: auto;
+    height: 44px;
+    border: 1px solid var(--linea);
+    background: var(--blanco);
+  }
+
+  .tabla.tabla-tarjetas td.celda-acciones .btn-icono.es-rojo {
+    border-color: var(--rojo-borde);
+    background: var(--rojo-suave);
+  }
+
+  .tabla.tabla-tarjetas td.celda-acciones > .btn {
+    width: 100%;
+  }
+
+  /* Fila de "sin resultados". */
+  .tabla.tabla-tarjetas tbody tr td.vacio {
+    display: block;
+    padding: 28px 8px;
+    border-bottom: 0;
+    text-align: center;
+  }
+
+  .tarjeta > .tarjeta-titulo + .tabla-contenedor {
+    margin-top: 12px;
+  }
+
+  .tabla-pie {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

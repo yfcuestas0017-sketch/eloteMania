@@ -15,7 +15,7 @@
 
 .adicional-productos-lista {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
   gap: 8px;
 }
 
@@ -36,10 +36,36 @@
 
 .adicional-productos-lista span {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 12px;
 }
 
 .adicional-productos-lista small {
   color: var(--apagado);
   font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .adicional-productos {
+    padding: 10px;
+  }
+
+  .adicional-productos-lista {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .adicional-productos-lista label {
+    min-height: 44px;
+  }
+
+  .adicional-productos-lista input {
+    width: 20px;
+    height: 20px;
+  }
+
+  .adicional-productos-lista span {
+    font-size: 13px;
+  }
 }

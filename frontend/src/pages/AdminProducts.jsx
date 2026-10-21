@@ -620,8 +620,8 @@ export default function AdminProducts() {
             </select>
           </div>
 
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="tabla-contenedor tabla-tarjetas-contenedor">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Producto</th>
@@ -642,7 +642,7 @@ export default function AdminProducts() {
 
                   return (
                     <tr key={producto.producto_id}>
-                      <td>
+                      <td className="celda-titulo">
                         <div className="celda-producto">
                           {producto.imagen_url ? (
                             <img
@@ -660,9 +660,9 @@ export default function AdminProducts() {
                           </div>
                         </div>
                       </td>
-                      <td>{producto.categoria || nombreCategoria(producto.categoria_id)}</td>
-                      <td>{pesos(producto.precio)}</td>
-                      <td>
+                      <td data-label="Categoría">{producto.categoria || nombreCategoria(producto.categoria_id)}</td>
+                      <td data-label="Precio">{pesos(producto.precio)}</td>
+                      <td data-label="Stock">
                         {producto.controla_inventario ? (
                           <span
                             style={{
@@ -684,10 +684,10 @@ export default function AdminProducts() {
                           <span className="apagado">Sin límite</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label="Disponibilidad">
                         <span className={`chip ${estado.clase}`}>{estado.texto}</span>
                       </td>
-                      <td>
+                      <td className="celda-acciones">
                         <div className="acciones">
                           <button
                             type="button"
