@@ -739,7 +739,7 @@ export default function AdminProducts() {
                               aria-label={`Desactivar ${producto.nombre}`}
                               title="Desactivar"
                             >
-                              <Trash2 size={16} />
+                              <Power size={16} />
                             </button>
                           )}
                           <button
