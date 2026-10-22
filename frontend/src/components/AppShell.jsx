@@ -96,11 +96,6 @@ export default function AppShell({ area = "admin", seccion, children }) {
         </Link>
 
         <div className="shell-pie-lateral">
-          <p>
-            ¿Necesitas ayuda?
-            <br />
-            WhatsApp {NEGOCIO.whatsapp}
-          </p>
           <button type="button" onClick={cerrarSesion}>
             Cerrar sesión <LogOut size={13} aria-hidden="true" />
           </button>
