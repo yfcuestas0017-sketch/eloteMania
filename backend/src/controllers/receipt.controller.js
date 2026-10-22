@@ -22,8 +22,10 @@ export async function obtenerComprobante(req, res) {
          v.total,
          v.cajero_id,
          u.nombres AS cajero,
+      COALESCE(u.nombres, 'Usuario eliminado') AS cajero,
          mp.nombre AS metodo_pago
        FROM comprobantes c
+       LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
        JOIN ventas v ON v.venta_id = c.venta_id
        JOIN pedidos p ON p.pedido_id = v.pedido_id
        JOIN usuarios u ON u.usuario_id = v.cajero_id
