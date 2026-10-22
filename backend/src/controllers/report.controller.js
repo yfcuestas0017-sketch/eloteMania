@@ -72,10 +72,12 @@ export async function obtenerVentasPorCajero(req, res) {
       `SELECT
          u.usuario_id,
          u.nombres,
+        COALESCE(u.nombres, 'Usuario eliminado') AS nombres,
          u.apellidos,
          COUNT(v.venta_id)::int AS cantidad_ventas,
          COALESCE(SUM(v.total), 0) AS total_recaudado
        FROM ventas v
+       LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
        INNER JOIN usuarios u ON u.usuario_id = v.cajero_id
        WHERE v.estado = 'vigente'
          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
@@ -164,6 +166,7 @@ export async function obtenerPedidosCajero(req, res) {
          c.cantidad_impresiones,
          c.fecha_emision,
          COALESCE(mp.nombre, 'Efectivo') AS metodo_pago,
+         COALESCE(TRIM(u.nombres || ' ' || COALESCE(u.apellidos, '')), 'Usuario eliminado') AS cajero,
          TRIM(u.nombres || ' ' || COALESCE(u.apellidos, '')) AS cajero,
          u.usuario_id AS cajero_id,
          COALESCE(
@@ -206,6 +209,7 @@ export async function obtenerPedidosCajero(req, res) {
        FROM ventas v
        JOIN pedidos p ON p.pedido_id = v.pedido_id
        JOIN comprobantes c ON c.venta_id = v.venta_id
+       LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
        JOIN usuarios u ON u.usuario_id = v.cajero_id
        LEFT JOIN pagos pa ON pa.pedido_id = p.pedido_id AND pa.estado = 'confirmado'
        LEFT JOIN metodos_pago mp ON mp.metodo_pago_id = pa.metodo_pago_id
