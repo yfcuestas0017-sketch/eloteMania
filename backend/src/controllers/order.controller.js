@@ -425,6 +425,8 @@ export async function listarPendientesEntrega(req, res) {
          c.fecha_emision AS fecha_pedido,
          v.total,
          u.nombres AS cajero
+        COALESCE(u.nombres, 'Usuario eliminado') AS cajero
+       LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
        FROM pedidos p
        JOIN ventas v ON v.pedido_id = p.pedido_id
        JOIN comprobantes c ON c.venta_id = v.venta_id
