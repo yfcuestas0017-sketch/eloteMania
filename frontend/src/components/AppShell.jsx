@@ -145,7 +145,6 @@ export default function AppShell({ area = "admin", seccion, children }) {
         </header>
 
         <main className="shell-contenido">{children}</main>
-
         <footer className="shell-pie no-imprimir">
           <span>Precios en pesos colombianos (COP)</span>
           <span>
