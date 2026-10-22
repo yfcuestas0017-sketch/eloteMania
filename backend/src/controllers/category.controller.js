@@ -1,5 +1,5 @@
 
-import { query } from "../config/db.js";
+import pool, { query } from "../config/db.js";
 
 function validarNombre(nombre) {
   return (
@@ -230,58 +230,81 @@ export async function desactivarCategoria(req, res, next) {
 }
 
 // DELETE /api/categorias/:id
+// DELETE /api/categories/:id
+// Borra la categoría y también sus productos.
 export async function eliminarCategoria(req, res, next) {
+  const id = Number(req.params.id);
+
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return res.status(400).json({
+      ok: false,
+      message: "Identificador de categoría inválido."
+    });
+  }
+
+  const cliente = await pool.connect();
+
   try {
-    const id = Number(req.params.id);
+    await cliente.query("BEGIN");
 
-    if (!Number.isSafeInteger(id) || id <= 0) {
-      return res.status(400).json({
-        ok: false,
-        message: "Identificador de categoría inválido."
-      });
-    }
-
-    const productos = await query(
-      `SELECT COUNT(*)::INTEGER AS cantidad
-       FROM productos
-       WHERE categoria_id = $1`,
+    const existe = await cliente.query(
+      `SELECT categoria_id FROM categorias WHERE categoria_id = $1 FOR UPDATE`,
       [id]
     );
 
-    if (productos.rows[0].cantidad > 0) {
-      return res.status(409).json({
-        ok: false,
-        message:
-          "No se puede eliminar la categoría mientras tenga productos asociados. Reasigna o elimina esos productos primero."
-      });
-    }
-
-    const result = await query(
-      `DELETE FROM categorias
-       WHERE categoria_id = $1
-       RETURNING categoria_id, nombre`,
-      [id]
-    );
-
-    if (!result.rowCount) {
+    if (!existe.rowCount) {
+      await cliente.query("ROLLBACK");
       return res.status(404).json({
         ok: false,
         message: "Categoría no encontrada."
       });
     }
 
+    const adicionalesLigados = await cliente.query(
+      `SELECT DISTINCT ap.adicional_id
+       FROM adicionales_productos ap
+       JOIN productos p ON p.producto_id = ap.producto_id
+       WHERE p.categoria_id = $1`,
+      [id]
+    );
+
+    const productos = await cliente.query(
+      `DELETE FROM productos WHERE categoria_id = $1`,
+      [id]
+    );
+
+    const ids = adicionalesLigados.rows.map((f) => f.adicional_id);
+    if (ids.length) {
+      await cliente.query(
+        `DELETE FROM adicionales a
+         WHERE a.adicional_id = ANY($1::bigint[])
+           AND NOT EXISTS (
+             SELECT 1 FROM adicionales_productos ap
+             WHERE ap.adicional_id = a.adicional_id
+           )`,
+        [ids]
+      );
+    }
+
+    const result = await cliente.query(
+      `DELETE FROM categorias
+       WHERE categoria_id = $1
+       RETURNING categoria_id, nombre`,
+      [id]
+    );
+
+    await cliente.query("COMMIT");
+
     res.json({
       ok: true,
       message: "Categoría eliminada permanentemente.",
+      productos_eliminados: productos.rowCount,
       categoria: result.rows[0]
     });
   } catch (error) {
-    if (error.code === "23503") {
-      return res.status(409).json({
-        ok: false,
-        message: "No se puede eliminar esta categoría porque tiene registros asociados."
-      });
-    }
+    await cliente.query("ROLLBACK").catch(() => {});
     next(error);
+  } finally {
+    cliente.release();
   }
 }
