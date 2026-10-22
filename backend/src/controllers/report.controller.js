@@ -145,8 +145,6 @@ export async function obtenerPedidosCajero(req, res) {
     const esAdmin = roles.includes("ADMIN");
     const cajeroParam = req.query.cajero_id ? Number(req.query.cajero_id) : null;
 
-    // Si no es admin, SIEMPRE se restringe al usuario autenticado.
-    // Si es admin, puede consultar un cajero específico o todos (si no envía cajero_id).
     const cajeroId = esAdmin && cajeroParam ? cajeroParam : (!esAdmin ? Number(req.user.usuario_id) : null);
     const filtrarCajero = cajeroId !== null;
 
@@ -165,7 +163,6 @@ export async function obtenerPedidosCajero(req, res) {
          c.fecha_emision,
          COALESCE(mp.nombre, 'Efectivo') AS metodo_pago,
          COALESCE(TRIM(u.nombres || ' ' || COALESCE(u.apellidos, '')), 'Usuario eliminado') AS cajero,
-         TRIM(u.nombres || ' ' || COALESCE(u.apellidos, '')) AS cajero,
          u.usuario_id AS cajero_id,
          COALESCE(
            (
@@ -208,7 +205,6 @@ export async function obtenerPedidosCajero(req, res) {
        JOIN pedidos p ON p.pedido_id = v.pedido_id
        JOIN comprobantes c ON c.venta_id = v.venta_id
        LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
-       JOIN usuarios u ON u.usuario_id = v.cajero_id
        LEFT JOIN pagos pa ON pa.pedido_id = p.pedido_id AND pa.estado = 'confirmado'
        LEFT JOIN metodos_pago mp ON mp.metodo_pago_id = pa.metodo_pago_id
        WHERE v.estado = 'vigente'
