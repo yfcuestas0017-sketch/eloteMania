@@ -1,0 +1,228 @@
+/* Gráfica de ventas: área roja suave sobre tarjeta blanca */
+
+.gv-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gv-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.gv-titulos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.gv-icono {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--rojo-suave);
+  color: var(--rojo);
+}
+
+.gv-titulo {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.gv-sub {
+  margin-top: 2px;
+  color: var(--apagado);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.gv-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.gv-total span {
+  color: var(--apagado);
+  font-size: 12px;
+}
+
+.gv-total strong {
+  font-family: var(--fuente-titulo);
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Lienzo ---------- */
+
+.gv-lienzo {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radio-m);
+  outline-offset: 4px;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gv-lienzo svg {
+  display: block;
+  max-width: none;
+  overflow: visible;
+}
+
+.gv-rejilla {
+  stroke: var(--linea);
+  stroke-width: 1;
+}
+
+.gv-eje {
+  fill: var(--apagado);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--fuente-texto);
+}
+
+.gv-eje-x {
+  text-transform: capitalize;
+}
+
+.gv-eje-dia {
+  font-weight: 700;
+  fill: var(--tinta);
+}
+
+.gv-eje.es-activo {
+  fill: var(--rojo);
+}
+
+.gv-punteada {
+  stroke: #cfc3b3;
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.gv-guia {
+  stroke: rgba(213, 9, 24, 0.45);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.gv-dato {
+  fill: var(--rojo);
+  stroke: #fff;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.gv-halo {
+  fill: rgba(213, 9, 24, 0.16);
+  pointer-events: none;
+}
+
+.gv-punto {
+  fill: #fff;
+  stroke: var(--rojo);
+  stroke-width: 3;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 5px rgba(213, 9, 24, 0.45));
+}
+
+.gv-captura {
+  cursor: pointer;
+}
+
+.gv-area,
+.gv-trazo {
+  animation: gv-entra 600ms var(--ease-salida);
+}
+
+@keyframes gv-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Burbuja blanca sobre el punto */
+.gv-burbuja {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--rojo);
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(213, 9, 24, 0.35);
+  transform: translate(-50%, calc(-100% - 16px));
+  pointer-events: none;
+}
+
+.gv-burbuja.debajo {
+  transform: translate(-50%, 18px);
+}
+
+.gv-burbuja strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.gv-burbuja span {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+}
+
+.gv-burbuja span::first-letter {
+  text-transform: uppercase;
+}
+
+.gv-vacio {
+  position: absolute;
+  inset: 0 0 46px;
+  display: grid;
+  place-items: center;
+  color: var(--apagado);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.gv-pista {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--apagado);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* ---------- Celular ---------- */
+
+@media (max-width: 720px) {
+  .gv-tarjeta {
+    gap: 14px;
+  }
+
+  .gv-total {
+    align-items: flex-start;
+    width: 100%;
+    padding-top: 12px;
+    border-top: 1px solid var(--linea);
+  }
+
+  .gv-total strong {
+    font-size: 24px;
+  }
+}

@@ -274,18 +274,7 @@
 }
 
 
-/* ---------- Filtros del reporte ---------- */
-
-.filtros-reporte {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 16px;
-}
-
-.filtros-reporte .campo-cajero {
-  min-width: 200px;
-}
+/* ---------- Cabecera de tarjeta ---------- */
 
 .cabecera-acciones-lado {
   display: flex;
@@ -298,49 +287,12 @@
   min-width: 0;
 }
 
-.caja-botones-rapidos {
-  flex-wrap: wrap;
-}
-
 /* ---------- Celular ---------- */
 
 @media (max-width: 720px) {
   .reportes-secciones-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
-  }
-
-  .filtros-reporte {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .filtros-reporte .campo-cajero,
-  .filtros-reporte .caja-botones-rapidos,
-  .filtros-reporte > button[type="submit"] {
-    grid-column: 1 / -1;
-  }
-
-  .filtros-reporte .campo-cajero {
-    min-width: 0;
-  }
-
-  .filtros-reporte .caja-botones-rapidos {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .filtros-reporte .caja-botones-rapidos .btn {
-    min-height: 40px;
-    padding: 0 6px;
-    white-space: normal;
-    text-align: center;
-  }
-
-  .filtros-reporte input[type="date"] {
-    min-width: 0;
   }
 
   .tarjeta-cabecera-accion {
@@ -383,25 +335,5 @@
   .btn-voucher {
     justify-content: center;
     min-height: 44px;
-  }
-
-  .cifras {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .cifra {
-    padding: 14px;
-  }
-
-  .cifra > strong {
-    font-size: 24px;
-    overflow-wrap: anywhere;
-  }
-}
-
-@media (max-width: 380px) {
-  .cifras {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

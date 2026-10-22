@@ -64,24 +64,27 @@ export default function CashierReports() {
     consultar();
   }, [desde, hasta]);
 
-  function aplicarFiltroRapido(tipo) {
-    const ahora = new Date();
-    if (tipo === "hoy") {
-      setDesde(hoy);
-      setHasta(hoy);
-    } else if (tipo === "ayer") {
-      const ayerDate = new Date();
-      ayerDate.setDate(ahora.getDate() - 1);
-      const ayerStr = ayerDate.toISOString().slice(0, 10);
-      setDesde(ayerStr);
-      setHasta(ayerStr);
-    } else if (tipo === "7dias") {
-      const sieteDias = new Date();
-      sieteDias.setDate(ahora.getDate() - 6);
-      setDesde(sieteDias.toISOString().slice(0, 10));
-      setHasta(hoy);
-    }
+  function rangoRapido(tipo) {
+    const dia = (restar) => {
+      const d = new Date();
+      d.setDate(d.getDate() - restar);
+      return fechaLocal(d);
+    };
+    if (tipo === "ayer") return [dia(1), dia(1)];
+    if (tipo === "7dias") return [dia(6), hoy];
+    return [hoy, hoy];
   }
+
+  function aplicarFiltroRapido(tipo) {
+    const [d, h] = rangoRapido(tipo);
+    setDesde(d);
+    setHasta(h);
+  }
+
+  const esRango = (tipo) => {
+    const [d, h] = rangoRapido(tipo);
+    return desde === d && hasta === h;
+  };
 
   const pedidosFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -138,15 +141,7 @@ export default function CashierReports() {
 
         {/* Filtros de fecha y búsqueda */}
         <section className="tarjeta no-imprimir">
-          <form
-            onSubmit={consultar}
-            style={{
-              display: "flex",
-              gap: 16,
-              flexWrap: "wrap",
-              alignItems: "flex-end"
-            }}
-          >
+          <form onSubmit={consultar} className="filtros-reporte">
             <div className="campo">
               <label htmlFor="caja-desde">Desde</label>
               <input
@@ -174,33 +169,27 @@ export default function CashierReports() {
               />
             </div>
 
-            <div className="caja-botones-rapidos">
-              <button
-                type="button"
-                className={`btn btn-secundario btn-sm ${desde === hoy && hasta === hoy ? "activo" : ""}`}
-                onClick={() => aplicarFiltroRapido("hoy")}
-              >
-                Hoy
-              </button>
-              <button
-                type="button"
-                className="btn btn-secundario btn-sm"
-                onClick={() => aplicarFiltroRapido("ayer")}
-              >
-                Ayer
-              </button>
-              <button
-                type="button"
-                className="btn btn-secundario btn-sm"
-                onClick={() => aplicarFiltroRapido("7dias")}
-              >
-                Últimos 7 días
-              </button>
+            <div className="rapidos" role="group" aria-label="Rangos rápidos">
+              {[
+                ["hoy", "Hoy"],
+                ["ayer", "Ayer"],
+                ["7dias", "7 días"]
+              ].map(([tipo, texto]) => (
+                <button
+                  key={tipo}
+                  type="button"
+                  className={`rapido${esRango(tipo) ? " activo" : ""}`}
+                  aria-pressed={esRango(tipo)}
+                  onClick={() => aplicarFiltroRapido(tipo)}
+                >
+                  {texto}
+                </button>
+              ))}
             </div>
 
             <button
               type="submit"
-              className="btn btn-primario"
+              className="btn btn-primario btn-actualizar"
               disabled={cargando}
             >
               <RefreshCw size={15} aria-hidden="true" />
@@ -246,8 +235,8 @@ export default function CashierReports() {
             </div>
           </div>
 
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="tabla-contenedor tabla-tarjetas-contenedor">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Pedido / Comprobante</th>
@@ -262,7 +251,7 @@ export default function CashierReports() {
               <tbody>
                 {pedidosFiltrados.map((pedido) => (
                   <tr key={pedido.venta_id}>
-                    <td>
+                    <td className="celda-titulo">
                       <div>
                         <strong>{pedido.numero_pedido}</strong>
                         <br />
@@ -271,10 +260,10 @@ export default function CashierReports() {
                         </small>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Fecha y hora">
                       <span>{formatoFecha(pedido.fecha_venta)}</span>
                     </td>
-                    <td>
+                    <td data-label="Productos" className="celda-bloque">
                       <div className="caja-resumen-productos">
                         {pedido.productos && pedido.productos.length > 0 ? (
                           pedido.productos.map((prod, idx) => (
@@ -294,18 +283,18 @@ export default function CashierReports() {
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Pago">
                       <span className="chip chip-pago">
                         {pedido.metodo_pago}
                       </span>
                     </td>
-                    <td className="num">
+                    <td className="num" data-label="Total">
                       <strong>{pesos(pedido.total)}</strong>
                     </td>
-                    <td>
+                    <td data-label="Entrega">
                       <span className="chip chip-verde">Completado</span>
                     </td>
-                    <td className="num">
+                    <td className="num celda-acciones">
                       <button
                         type="button"
                         className="btn btn-secundario btn-sm btn-voucher"

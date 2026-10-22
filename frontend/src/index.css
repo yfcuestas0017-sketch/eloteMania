@@ -165,6 +165,7 @@ table {
   width: 100%;
 }
 
+.btn-sm,
 .btn-chico {
   min-height: 36px;
   padding: 0 14px;
@@ -862,5 +863,166 @@ svg {
   .tabla-pie {
     flex-direction: column;
     gap: 4px;
+  }
+}
+
+/* ==========================================================
+   Filtro de fechas (compartido: reportes de caja y admin)
+   Escritorio: una sola fila. Celular: chips arriba, fechas en
+   dos columnas, botón de actualizar a todo el ancho.
+   ========================================================== */
+
+.filtros-reporte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.filtros-reporte .campo {
+  flex: 1 1 160px;
+  max-width: 220px;
+}
+
+.filtros-reporte .campo-cajero {
+  flex: 1 1 220px;
+  max-width: 300px;
+}
+
+/* Selector segmentado: Hoy · Ayer · 7 días */
+.rapidos {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  background: var(--papel);
+}
+
+.rapido {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--apagado);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color 160ms var(--ease-salida),
+    color 160ms var(--ease-salida),
+    box-shadow 160ms var(--ease-salida),
+    transform 120ms var(--ease-salida);
+}
+
+.rapido:active {
+  transform: scale(0.96);
+}
+
+.rapido.activo {
+  background: var(--blanco);
+  color: var(--rojo);
+  box-shadow: 0 1px 3px rgba(41, 34, 31, 0.14);
+}
+
+@media (hover: hover) {
+  .rapido:not(.activo):hover {
+    color: var(--tinta);
+    background: rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* Campos de fecha iguales en iOS, Android y escritorio */
+input[type="date"].entrada {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 46px;
+  text-align: left;
+}
+
+input[type="date"].entrada::-webkit-date-and-time-value {
+  min-height: 1.3em;
+  text-align: left;
+}
+
+.filtros-reporte .btn-actualizar {
+  flex: none;
+  min-height: 46px;
+}
+
+@media (max-width: 720px) {
+  .filtros-reporte {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 12px;
+  }
+
+  .filtros-reporte .campo,
+  .filtros-reporte .campo-cajero {
+    max-width: none;
+    min-width: 0;
+  }
+
+  .filtros-reporte .rapidos,
+  .filtros-reporte .campo-cajero,
+  .filtros-reporte .btn-actualizar {
+    grid-column: 1 / -1;
+  }
+
+  /* Los chips pasan arriba: es lo que más se usa en celular. */
+  .filtros-reporte .rapidos {
+    order: -1;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .rapido {
+    min-height: 44px;
+    padding: 0 6px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .filtros-reporte .btn-actualizar {
+    width: 100%;
+    min-height: 50px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 360px) {
+  .filtros-reporte {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Cifras compactas en celular: dos por fila, la impar ocupa todo el ancho */
+@media (max-width: 720px) {
+  .cifras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .cifras > .cifra:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .cifra {
+    padding: 14px;
+  }
+
+  .cifra > strong {
+    font-size: 24px;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 340px) {
+  .cifras {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

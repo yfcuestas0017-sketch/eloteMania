@@ -1,0 +1,120 @@
+/* Historial de pedidos del punto elegido en la gráfica (reemplaza la lista general) */
+
+.gv-historial {
+  scroll-margin-top: 84px;
+  animation: gv-sube 220ms var(--ease-salida);
+}
+
+@keyframes gv-sube {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.gv-historial-titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.gv-lista,
+.gv-productos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gv-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.gv-pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: #fffdf9;
+}
+
+.gv-pedido-cab {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.gv-pedido-cab strong {
+  display: block;
+  font-size: 14px;
+}
+
+.gv-pedido-cab small {
+  color: var(--apagado);
+  font-size: 11px;
+}
+
+.gv-hora {
+  padding: 4px 9px;
+  border-radius: 100px;
+  background: var(--rojo-suave);
+  color: var(--rojo);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.gv-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.gv-productos small {
+  display: block;
+  color: var(--apagado);
+  font-style: italic;
+  font-size: 11px;
+}
+
+.gv-pedido-pie {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px dashed var(--linea);
+}
+
+.gv-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gv-monto {
+  font-family: var(--fuente-titulo);
+  font-size: 17px;
+}
+
+.gv-imprimir {
+  grid-column: 1 / -1;
+  justify-content: center;
+  min-height: 42px;
+}
+
+@media (max-width: 720px) {
+  .gv-lista {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gv-historial .tarjeta-cabecera-accion .btn {
+    width: 100%;
+  }
+}

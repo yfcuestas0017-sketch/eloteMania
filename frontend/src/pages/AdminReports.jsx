@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import AppShell from "../components/AppShell";
 import ComprobanteModal from "../components/ComprobanteModal";
+import GraficaVentas from "../components/GraficaVentas";
+import HistorialDia from "../components/HistorialDia";
 import { fechaLocal, pesos } from "../lib/formato";
 import { apiFetch } from "../services/api";
 import "./admin.css";
@@ -46,6 +48,7 @@ export default function AdminReports() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState(null);
+  const [puntoGrafica, setPuntoGrafica] = useState(null); // día u hora elegidos en la gráfica
 
   async function consultar(event) {
     if (event) event.preventDefault();
@@ -87,21 +90,45 @@ export default function AdminReports() {
     consultar();
   }, [desde, hasta, cajeroSeleccionado]);
 
-  function aplicarFiltroRapido(tipo) {
+  function rangoRapido(tipo) {
     const ahora = new Date();
-    if (tipo === "hoy") {
-      setDesde(hoy);
-      setHasta(hoy);
-    } else if (tipo === "semana") {
-      const sieteDias = new Date();
-      sieteDias.setDate(ahora.getDate() - 6);
-      setDesde(sieteDias.toISOString().slice(0, 10));
-      setHasta(hoy);
-    } else if (tipo === "mes") {
-      const primerDiaMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-      setDesde(primerDiaMes.toISOString().slice(0, 10));
-      setHasta(hoy);
+    if (tipo === "semana") {
+      const d = new Date();
+      d.setDate(ahora.getDate() - 6);
+      return [fechaLocal(d), hoy];
     }
+    if (tipo === "mes") {
+      return [fechaLocal(new Date(ahora.getFullYear(), ahora.getMonth(), 1)), hoy];
+    }
+    if (tipo === "mesanterior") {
+      return [
+        fechaLocal(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)),
+        fechaLocal(new Date(ahora.getFullYear(), ahora.getMonth(), 0))
+      ];
+    }
+    return [hoy, hoy];
+  }
+
+  function aplicarFiltroRapido(tipo) {
+    const [d, h] = rangoRapido(tipo);
+    setDesde(d);
+    setHasta(h);
+  }
+
+  const esRango = (tipo) => {
+    const [d, h] = rangoRapido(tipo);
+    return desde === d && hasta === h;
+  };
+
+  // El punto elegido solo vale mientras no cambien las fechas ni el cajero.
+  const huellaFiltro = `${desde}|${hasta}|${cajeroSeleccionado?.usuario_id ?? "todos"}`;
+  const historialDia = puntoGrafica?.huella === huellaFiltro ? puntoGrafica : null;
+
+  function elegirPuntoGrafica(punto) {
+    setPuntoGrafica({ ...punto, huella: huellaFiltro });
+    requestAnimationFrame(() => {
+      document.getElementById("seccion-pedidos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function alternarCajero(cajero) {
@@ -212,33 +239,28 @@ export default function AdminReports() {
               </select>
             </div>
 
-            <div className="caja-botones-rapidos">
-              <button
-                type="button"
-                className={`btn btn-secundario btn-sm ${desde === hoy && hasta === hoy ? "activo" : ""}`}
-                onClick={() => aplicarFiltroRapido("hoy")}
-              >
-                Hoy
-              </button>
-              <button
-                type="button"
-                className="btn btn-secundario btn-sm"
-                onClick={() => aplicarFiltroRapido("semana")}
-              >
-                Últimos 7 días
-              </button>
-              <button
-                type="button"
-                className="btn btn-secundario btn-sm"
-                onClick={() => aplicarFiltroRapido("mes")}
-              >
-                Este mes
-              </button>
+            <div className="rapidos" role="group" aria-label="Rangos rápidos">
+              {[
+                ["hoy", "Hoy"],
+                ["semana", "7 días"],
+                ["mes", "Este mes"],
+                ["mesanterior", "Mes anterior"]
+              ].map(([tipo, texto]) => (
+                <button
+                  key={tipo}
+                  type="button"
+                  className={`rapido${esRango(tipo) ? " activo" : ""}`}
+                  aria-pressed={esRango(tipo)}
+                  onClick={() => aplicarFiltroRapido(tipo)}
+                >
+                  {texto}
+                </button>
+              ))}
             </div>
 
             <button
               type="submit"
-              className="btn btn-primario"
+              className="btn btn-primario btn-actualizar"
               disabled={cargando}
             >
               <RefreshCw size={15} aria-hidden="true" />
@@ -321,6 +343,22 @@ export default function AdminReports() {
             </article>
           </section>
         )}
+
+        {/* Gráfica de ventas por día: clic en un punto = historial de ese día */}
+        <GraficaVentas
+          key={huellaFiltro}
+          pedidos={pedidosRecientes}
+          desde={desde}
+          hasta={hasta}
+          cargando={cargando}
+          titulo={
+            cajeroSeleccionado
+              ? `${cajeroSeleccionado.nombres} ${cajeroSeleccionado.apellidos || ""}`.trim()
+              : "Todos los cajeros"
+          }
+          seleccion={historialDia?.clave ?? null}
+          onSeleccionar={elegirPuntoGrafica}
+        />
 
         {/* Sección de Gráficas: Ventas por cajero y Productos más vendidos */}
         <div className="reportes-secciones-grid no-imprimir">
@@ -565,7 +603,19 @@ export default function AdminReports() {
           </section>
         </div>
 
-        {/* Sección de Historial de Pedidos y Reimpresión de Voucher */}
+        {/* Si hay un punto elegido en la gráfica, su historial ocupa este mismo lugar */}
+        {historialDia ? (
+          <HistorialDia
+            seleccion={historialDia}
+            nombreCajero={
+              cajeroSeleccionado
+                ? `${cajeroSeleccionado.nombres} ${cajeroSeleccionado.apellidos || ""}`.trim()
+                : ""
+            }
+            onCerrar={() => setPuntoGrafica(null)}
+            onVerComprobante={setComprobanteSeleccionado}
+          />
+        ) : (
         <section id="seccion-pedidos" className="tarjeta no-imprimir">
           <div className="tarjeta-cabecera-accion">
             <div>
@@ -696,6 +746,7 @@ export default function AdminReports() {
             </table>
           </div>
         </section>
+        )}
       </div>
 
       {/* Modal para ver y reimprimir voucher */}
