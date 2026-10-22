@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Pencil, Plus, Search, Trash, Trash2, Upload } from "lucide-react";
+import { Check, Pencil, Plus, Search, Trash, Trash2, Upload,Power } from "lucide-react";
 import AppShell from "../components/AppShell";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { apiFetch, formatearUrlImagen, subirFotoProducto } from "../services/api";
