@@ -97,7 +97,7 @@ export default function Menu() {
         <div className="menu-contacto">
           <Link to="/login" className="btn btn-secundario">
             <LogIn size={18} aria-hidden="true" />
-            Acceso del personal
+            Acceso al Sistema
           </Link>
         </div>
       </header>
@@ -326,10 +326,6 @@ export default function Menu() {
             según disponibilidad.
           </small>
         </div>
-
-        <Link to="/login" className="menu-enlace-acceso">
-          Acceso del personal
-        </Link>
       </footer>
     </div>
   );
