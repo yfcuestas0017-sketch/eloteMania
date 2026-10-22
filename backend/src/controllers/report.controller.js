@@ -62,7 +62,6 @@ export async function obtenerResumen(req, res) {
     res.status(500).json({ mensaje: "No se pudo generar el resumen." });
   }
 }
-
 export async function obtenerVentasPorCajero(req, res) {
   const rango = obtenerRango(req, res);
   if (!rango) return;
