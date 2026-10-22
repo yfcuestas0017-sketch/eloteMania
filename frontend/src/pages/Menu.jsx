@@ -95,16 +95,6 @@ export default function Menu() {
         </Link>
 
         <div className="menu-contacto">
-          <a
-            className="menu-whatsapp"
-            href={NEGOCIO.whatsappLink}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <MessageCircle size={20} aria-hidden="true" />
-            WhatsApp {NEGOCIO.whatsapp}
-          </a>
-
           <Link to="/login" className="btn btn-secundario">
             <LogIn size={18} aria-hidden="true" />
             Acceso del personal
