@@ -186,13 +186,6 @@ export default function Login() {
               {cargando ? "Ingresando..." : "Iniciar sesión"}
             </button>
           </form>
-
-          <div className="login-rol">
-            <strong>Tu espacio depende de tu rol</strong>
-            <p>Administrador: gestión completa del negocio.</p>
-            <p>Cajero: ventas y comprobantes de pedidos.</p>
-          </div>
-
           <p className="login-nota">
             ¿No tienes acceso o olvidaste tu contraseña? Solicítalo al
             administrador.
