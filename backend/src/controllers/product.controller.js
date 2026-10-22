@@ -1,4 +1,4 @@
-import { query } from "../config/db.js";
+import pool, { query } from "../config/db.js";
 
 function validarId(id) {
   return Number.isSafeInteger(id) && id > 0;
@@ -495,18 +495,28 @@ export async function desactivarProducto(req, res, next) {
 }
 
 // DELETE /api/productos/:id
+// DELETE /api/products/:id
 export async function eliminarProducto(req, res, next) {
+  const id = Number(req.params.id);
+
+  if (!validarId(id)) {
+    return res.status(400).json({
+      ok: false,
+      message: "Identificador de producto inválido."
+    });
+  }
+
+  const cliente = await pool.connect();
+
   try {
-    const id = Number(req.params.id);
+    await cliente.query("BEGIN");
 
-    if (!validarId(id)) {
-      return res.status(400).json({
-        ok: false,
-        message: "Identificador de producto inválido."
-      });
-    }
+    const adicionalesLigados = await cliente.query(
+      `SELECT adicional_id FROM adicionales_productos WHERE producto_id = $1`,
+      [id]
+    );
 
-    const result = await query(
+    const result = await cliente.query(
       `DELETE FROM productos
        WHERE producto_id = $1
        RETURNING producto_id, nombre`,
@@ -514,11 +524,28 @@ export async function eliminarProducto(req, res, next) {
     );
 
     if (!result.rowCount) {
+      await cliente.query("ROLLBACK");
       return res.status(404).json({
         ok: false,
         message: "Producto no encontrado."
       });
     }
+
+    // Borra los adicionales que quedaron sin productos.
+    const ids = adicionalesLigados.rows.map((f) => f.adicional_id);
+    if (ids.length) {
+      await cliente.query(
+        `DELETE FROM adicionales a
+         WHERE a.adicional_id = ANY($1::bigint[])
+           AND NOT EXISTS (
+             SELECT 1 FROM adicionales_productos ap
+             WHERE ap.adicional_id = a.adicional_id
+           )`,
+        [ids]
+      );
+    }
+
+    await cliente.query("COMMIT");
 
     res.json({
       ok: true,
@@ -526,13 +553,9 @@ export async function eliminarProducto(req, res, next) {
       producto: result.rows[0]
     });
   } catch (error) {
-    if (error.code === "23503") {
-      return res.status(409).json({
-        ok: false,
-        message:
-          "No se puede eliminar permanentemente este producto porque tiene movimientos de inventario o adicionales asociados. Desactívalo para conservar el historial."
-      });
-    }
+    await cliente.query("ROLLBACK").catch(() => {});
     next(error);
+  } finally {
+    cliente.release();
   }
 }
