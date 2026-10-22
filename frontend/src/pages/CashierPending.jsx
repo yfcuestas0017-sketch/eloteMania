@@ -211,7 +211,7 @@ export default function CashierPending() {
                 <dl className="lista-datos">
                   <div>
                     <dt>Pedido</dt>
-                    <dd>{detalle.numero_pedido || `#${detalle.pedido_id}`}</dd>
+                    <dd>{detalle.numero_dia ? `N° ${detalle.numero_dia}` : detalle.numero_pedido || `#${detalle.pedido_id}`}</dd>
                   </div>
                   <div>
                     <dt>Cajero</dt>

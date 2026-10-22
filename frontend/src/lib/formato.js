@@ -9,6 +9,14 @@ export function pesos(valor) {
     .replace(/^-\$/, "-$");
 }
 
+// Número de pedido del día (1, 2, 3...). Si es un pedido viejo sin número, usa el código largo.
+export function etiquetaPedido(pedido) {
+  if (!pedido) return "—";
+  return pedido.numero_dia
+    ? `N° ${pedido.numero_dia}`
+    : pedido.numero_pedido || "—";
+}
+
 export function fechaLocal(fecha = new Date()) {
   const anio = fecha.getFullYear();
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");

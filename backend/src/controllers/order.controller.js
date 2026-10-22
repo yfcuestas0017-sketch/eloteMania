@@ -248,15 +248,25 @@ export async function checkout(req, res) {
       }
     }
 
+    // Bloqueo por transacción: evita que dos cobros simultáneos reciban
+    // el mismo número de pedido del día. Se libera solo al COMMIT/ROLLBACK.
+    await cliente.query("SELECT pg_advisory_xact_lock(20260001)");
+
     // 1) Crear el pedido en estado "pendiente".
     const pedidoCreado = await cliente.query(
-      `INSERT INTO pedidos (numero_pedido, cajero_id)
+      `INSERT INTO pedidos (numero_pedido, numero_dia, cajero_id)
        VALUES (
          'P-' || TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISS')
               || '-' || SUBSTR(MD5(RANDOM()::TEXT), 1, 4),
+         (
+           SELECT COALESCE(MAX(numero_dia), 0) + 1
+           FROM pedidos
+           WHERE (fecha_pedido AT TIME ZONE 'America/Bogota')::date
+               = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+         ),
          $1
        )
-       RETURNING pedido_id, numero_pedido`,
+       RETURNING pedido_id, numero_pedido, numero_dia`,
       [usuarioId]
     );
 
@@ -389,13 +399,15 @@ export async function checkout(req, res) {
       mensaje: "Venta confirmada correctamente.",
       pedido: {
         pedido_id: pedido.pedido_id,
-        numero_pedido: pedido.numero_pedido
+        numero_pedido: pedido.numero_pedido,
+        numero_dia: pedido.numero_dia
       },
       venta_id: resultado.resultado_venta_id,
       comprobante: {
         ...comprobanteConsulta.rows[0],
         total: resultado.resultado_total,
-        numero_pedido: pedido.numero_pedido
+        numero_pedido: pedido.numero_pedido,
+        numero_dia: pedido.numero_dia
       }
     });
   } catch (error) {
@@ -421,16 +433,15 @@ export async function listarPendientesEntrega(req, res) {
       `SELECT
          p.pedido_id,
          p.numero_pedido,
+         p.numero_dia,
          c.numero_comprobante,
          c.fecha_emision AS fecha_pedido,
          v.total,
-         u.nombres AS cajero
-        COALESCE(u.nombres, 'Usuario eliminado') AS cajero
+         COALESCE(u.nombres, 'Usuario eliminado') AS cajero
        FROM pedidos p
        JOIN ventas v ON v.pedido_id = p.pedido_id
        JOIN comprobantes c ON c.venta_id = v.venta_id
        LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
-       JOIN usuarios u ON u.usuario_id = v.cajero_id
        WHERE p.estado_entrega = 'pendiente'
          AND p.estado = 'completado'
          AND v.estado = 'vigente'

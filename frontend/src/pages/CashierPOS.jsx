@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import AppShell from "../components/AppShell";
 import { apiFetch, formatearUrlImagen } from "../services/api";
-import { leerUsuario, nombreVisible, pesos } from "../lib/formato";
+import { etiquetaPedido, leerUsuario, nombreVisible, pesos } from "../lib/formato";
 import { NEGOCIO } from "../config/negocio";
 import logo from "../assets/logo-elote-mania.png";
 import "./admin.css";
@@ -353,6 +353,8 @@ export default function CashierPOS() {
 
       setComprobante({
         ...datosComprobante,
+        numero_dia:
+          resultado.pedido?.numero_dia ?? datosComprobante.numero_dia ?? null,
         numero_pedido:
           resultado.pedido?.numero_pedido ||
           datosComprobante.numero_pedido ||
@@ -393,7 +395,7 @@ export default function CashierPOS() {
             <div>
               <h1 className="pagina-titulo">¡Pedido cobrado!</h1>
               <p className="pagina-sub">
-                Pedido {comprobante.numero_pedido} · Cobro registrado el{" "}
+                Pedido {etiquetaPedido(comprobante)} · Cobro registrado el{" "}
                 {formatoFecha(comprobante.fecha_emision)}
               </p>
             </div>
@@ -461,7 +463,9 @@ export default function CashierPOS() {
                     <small>Comprobante de pedido · COP</small>
                   </header>
 
-                  <p className="comprobante-numero">{comprobante.numero_pedido}</p>
+                  <p className="comprobante-numero">
+                    {comprobante.numero_dia ? `Pedido N° ${comprobante.numero_dia}` : comprobante.numero_pedido}
+                  </p>
                   <div className="comprobante-datos">
                     <div className="comprobante-fila">
                       <span>Fecha / hora</span>

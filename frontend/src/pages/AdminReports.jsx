@@ -17,7 +17,7 @@ import AppShell from "../components/AppShell";
 import ComprobanteModal from "../components/ComprobanteModal";
 import GraficaVentas from "../components/GraficaVentas";
 import HistorialDia from "../components/HistorialDia";
-import { fechaLocal, pesos } from "../lib/formato";
+import { etiquetaPedido, fechaLocal, pesos } from "../lib/formato";
 import { apiFetch } from "../services/api";
 import "./admin.css";
 import "./CashierReports.css";
@@ -663,7 +663,7 @@ export default function AdminReports() {
                   <tr key={pedido.venta_id}>
                     <td className="celda-titulo">
                       <div>
-                        <strong>{pedido.numero_pedido}</strong>
+                        <strong>{etiquetaPedido(pedido)}</strong>
                         <br />
                         <small className="caja-comprobante-tag">
                           {pedido.numero_comprobante}

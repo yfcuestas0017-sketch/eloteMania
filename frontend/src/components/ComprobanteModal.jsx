@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Check, Printer, X } from "lucide-react";
 import logo from "../assets/logo-elote-mania.png";
 import { NEGOCIO } from "../config/negocio";
-import { pesos } from "../lib/formato";
+import { etiquetaPedido, pesos } from "../lib/formato";
 import { apiFetch } from "../services/api";
 import "./ComprobanteModal.css";
 
@@ -55,7 +55,7 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
           <div>
             <h3 className="modal-titulo">Comprobante de pedido</h3>
             <p className="modal-sub">
-              {comprobante.numero_comprobante} · Pedido {comprobante.numero_pedido}
+              {comprobante.numero_comprobante} · Pedido {etiquetaPedido(comprobante)}
             </p>
           </div>
           <button
@@ -89,7 +89,9 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
                 )}
               </header>
 
-              <p className="comprobante-numero">{comprobante.numero_pedido}</p>
+              <p className="comprobante-numero">
+                {comprobante.numero_dia ? `Pedido N° ${comprobante.numero_dia}` : comprobante.numero_pedido}
+              </p>
 
               <div className="comprobante-datos">
                 <div className="comprobante-fila">

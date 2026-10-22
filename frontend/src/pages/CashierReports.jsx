@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import AppShell from "../components/AppShell";
 import ComprobanteModal from "../components/ComprobanteModal";
-import { fechaLocal, pesos } from "../lib/formato";
+import { etiquetaPedido, fechaLocal, pesos } from "../lib/formato";
 import { apiFetch } from "../services/api";
 import "./admin.css";
 import "./CashierReports.css";
@@ -91,7 +91,7 @@ export default function CashierReports() {
     if (!q) return pedidos;
 
     return pedidos.filter((p) => {
-      const numPedido = (p.numero_pedido || "").toLowerCase();
+      const numPedido = `${p.numero_pedido || ""} ${p.numero_dia || ""}`.toLowerCase();
       const numComp = (p.numero_comprobante || "").toLowerCase();
       const metodo = (p.metodo_pago || "").toLowerCase();
       const tieneProducto = (p.productos || []).some((item) =>
@@ -253,7 +253,7 @@ export default function CashierReports() {
                   <tr key={pedido.venta_id}>
                     <td className="celda-titulo">
                       <div>
-                        <strong>{pedido.numero_pedido}</strong>
+                        <strong>{etiquetaPedido(pedido)}</strong>
                         <br />
                         <small className="caja-comprobante-tag">
                           {pedido.numero_comprobante}

@@ -1,5 +1,5 @@
 import { Printer, X } from "lucide-react";
-import { pesos } from "../lib/formato";
+import { etiquetaPedido, pesos } from "../lib/formato";
 import "./HistorialDia.css";
 
 function horaPedido(fecha) {
@@ -52,7 +52,7 @@ export default function HistorialDia({ seleccion, nombreCajero, onCerrar, onVerC
             <li key={pedido.venta_id} className="gv-pedido">
               <div className="gv-pedido-cab">
                 <div>
-                  <strong>{pedido.numero_pedido}</strong>
+                  <strong>{etiquetaPedido(pedido)}</strong>
                   <small>{pedido.numero_comprobante}</small>
                 </div>
                 <span className="gv-hora">{horaPedido(pedido.fecha_venta)}</span>

@@ -155,6 +155,7 @@ export async function obtenerPedidosCajero(req, res) {
          v.fecha_venta,
          p.pedido_id,
          p.numero_pedido,
+         p.numero_dia,
          p.estado_entrega,
          c.comprobante_id,
          c.numero_comprobante,
