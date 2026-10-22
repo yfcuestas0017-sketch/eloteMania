@@ -71,14 +71,12 @@ export async function obtenerVentasPorCajero(req, res) {
     const resultado = await query(
       `SELECT
          u.usuario_id,
-         u.nombres,
-        COALESCE(u.nombres, 'Usuario eliminado') AS nombres,
+         COALESCE(u.nombres, 'Usuario eliminado') AS nombres,
          u.apellidos,
          COUNT(v.venta_id)::int AS cantidad_ventas,
          COALESCE(SUM(v.total), 0) AS total_recaudado
        FROM ventas v
        LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
-       INNER JOIN usuarios u ON u.usuario_id = v.cajero_id
        WHERE v.estado = 'vigente'
          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
              BETWEEN $1::date AND $2::date
