@@ -116,7 +116,7 @@ export default function Menu() {
             <span className="menu-servicio-punto abierto" aria-hidden="true" />
             <div>
               <strong>Local abierto</strong>
-              <small>Atendiendo en el local</small>
+              <small> Atendiendo en el local</small>
             </div>
           </div>
         </section>
