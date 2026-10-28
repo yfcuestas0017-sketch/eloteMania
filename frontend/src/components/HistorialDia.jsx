@@ -52,8 +52,24 @@ export default function HistorialDia({ seleccion, nombreCajero, onCerrar, onVerC
             <li key={pedido.venta_id} className="gv-pedido">
               <div className="gv-pedido-cab">
                 <div>
-                  <strong>{etiquetaPedido(pedido)}</strong>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <strong>{etiquetaPedido(pedido)}</strong>
+                    {pedido.tipo_pedido === "domicilio" ? (
+                      <span className="chip chip-naranja" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                        🛵 Domicilio
+                      </span>
+                    ) : (
+                      <span className="chip chip-gris" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                        Local
+                      </span>
+                    )}
+                  </div>
                   <small>{pedido.numero_comprobante}</small>
+                  {pedido.tipo_pedido === "domicilio" && pedido.nombre_cliente_domicilio && (
+                    <div style={{ fontSize: "11px", color: "var(--apagado)", marginTop: "2px" }}>
+                      👤 {pedido.nombre_cliente_domicilio} · 📍 {pedido.barrio_domicilio || pedido.direccion_domicilio}
+                    </div>
+                  )}
                 </div>
                 <span className="gv-hora">{horaPedido(pedido.fecha_venta)}</span>
               </div>

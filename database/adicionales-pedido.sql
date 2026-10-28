@@ -87,6 +87,7 @@ DECLARE
   v_subtotal NUMERIC(12,2);
   v_descuento NUMERIC(12,2);
   v_impuesto NUMERIC(12,2);
+  v_costo_domicilio NUMERIC(12,2);
   v_numero_venta VARCHAR(30);
   v_numero_comprobante VARCHAR(40);
   v_detalle RECORD;
@@ -146,6 +147,9 @@ BEGIN
     RAISE EXCEPTION 'El método de pago no existe o está inactivo.';
   END IF;
 
+  -- Costo de domicilio del pedido (0 si es local).
+  v_costo_domicilio := COALESCE(v_pedido.costo_domicilio, 0);
+
   SELECT
     COALESCE(SUM(dp.cantidad * dp.precio_unitario), 0)
       + COALESCE((
@@ -161,6 +165,7 @@ BEGIN
           FROM pedido_adicionales pa
           WHERE pa.pedido_id = p_pedido_id
         ), 0)
+      + v_costo_domicilio
   INTO v_subtotal, v_descuento, v_impuesto, v_total
   FROM detalle_pedido dp
   WHERE dp.pedido_id = p_pedido_id;
@@ -173,7 +178,7 @@ BEGIN
     RAISE EXCEPTION 'El descuento supera el subtotal.';
   END IF;
 
-  IF ROUND(v_subtotal - v_descuento + v_impuesto, 2)
+  IF ROUND(v_subtotal - v_descuento + v_impuesto + v_costo_domicilio, 2)
      <> ROUND(v_total, 2) THEN
     RAISE EXCEPTION
       'Los totales de los detalles no coinciden. Revise los importes.';

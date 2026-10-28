@@ -199,3 +199,45 @@
   }
 }
 
+
+/* Etiquetas de domicilio y local en comprobante */
+.comprobante-tipo-etiqueta {
+  display: flex;
+  justify-content: center;
+  margin: -6px 0 10px;
+}
+
+.comprobante-tag-domicilio {
+  display: inline-block;
+  padding: 3px 12px;
+  background: #ffedd5;
+  color: #c2410c;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border-radius: 100px;
+  text-transform: uppercase;
+  border: 1px dashed #ea580c;
+}
+
+.comprobante-tag-local {
+  display: inline-block;
+  padding: 3px 12px;
+  background: var(--verde-suave);
+  color: var(--verde);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border-radius: 100px;
+  text-transform: uppercase;
+}
+
+.comprobante-fila-domicilio {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px dashed #d9d9d9;
+  font-weight: 700;
+  color: #c2410c;
+}

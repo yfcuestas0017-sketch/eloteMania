@@ -32,9 +32,12 @@
 .btn-voucher {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   white-space: nowrap;
   font-weight: 600;
+  min-height: 38px;
+  padding: 0 14px;
 }
 
 .btn-voucher:hover {
@@ -42,7 +45,6 @@
   border-color: var(--ambar);
   color: var(--tinta);
 }
-
 
 @media (max-width: 720px) {
   .caja-resumen-productos {
@@ -52,7 +54,9 @@
   }
 
   .btn-voucher {
+    width: 100%;
     justify-content: center;
-    min-height: 46px;
+    min-height: 48px;
+    font-size: 14px;
   }
 }

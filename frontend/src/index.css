@@ -277,6 +277,16 @@ table {
   color: var(--rojo);
 }
 
+.chip-naranja {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.chip-gris {
+  background: var(--papel);
+  color: var(--apagado);
+}
+
 /* ---------- Encabezado de página ---------- */
 
 .pagina-cabecera {
@@ -867,9 +877,9 @@ svg {
 }
 
 /* ==========================================================
-   Filtro de fechas (compartido: reportes de caja y admin)
-   Escritorio: una sola fila. Celular: chips arriba, fechas en
-   dos columnas, botón de actualizar a todo el ancho.
+   Filtro de fechas y canales (compartido: reportes de caja y admin)
+   Escritorio: fila fluida. Celular: botones rápidos y canales arriba,
+   fechas en dos columnas, botón de actualizar a todo el ancho.
    ========================================================== */
 
 .filtros-reporte {
@@ -880,13 +890,20 @@ svg {
 }
 
 .filtros-reporte .campo {
-  flex: 1 1 160px;
-  max-width: 220px;
+  flex: 1 1 150px;
+  max-width: 200px;
+  min-width: 130px;
 }
 
 .filtros-reporte .campo-cajero {
-  flex: 1 1 220px;
-  max-width: 300px;
+  flex: 1 1 200px;
+  max-width: 260px;
+}
+
+.filtros-reporte .campo-tipo-filtro {
+  flex: 1 1 auto;
+  min-width: 260px;
+  max-width: 340px;
 }
 
 /* Selector segmentado: Hoy · Ayer · 7 días */
@@ -897,20 +914,25 @@ svg {
   border: 1px solid var(--linea);
   border-radius: 12px;
   background: var(--papel);
+  align-items: center;
 }
 
 .rapido {
   flex: 1 1 auto;
   min-height: 40px;
-  padding: 0 14px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
   color: var(--apagado);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   transition:
     background-color 160ms var(--ease-salida),
     color 160ms var(--ease-salida),
@@ -935,6 +957,52 @@ svg {
   }
 }
 
+/* Selector de canal (Todos / Local / Domicilio) */
+.selector-tipo-reporte {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  width: 100%;
+}
+
+.selector-tipo-reporte .tipo-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--apagado);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms var(--ease-salida);
+}
+
+.selector-tipo-reporte .tipo-btn:active {
+  transform: scale(0.96);
+}
+
+.selector-tipo-reporte .tipo-btn:hover:not(.activo) {
+  color: var(--tinta);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.selector-tipo-reporte .tipo-btn.activo {
+  background: var(--blanco);
+  color: var(--rojo);
+  border-color: var(--linea);
+  box-shadow: 0 1px 3px rgba(41, 34, 31, 0.14);
+}
+
 /* Campos de fecha iguales en iOS, Android y escritorio */
 input[type="date"].entrada {
   -webkit-appearance: none;
@@ -953,7 +1021,7 @@ input[type="date"].entrada::-webkit-date-and-time-value {
   min-height: 46px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 860px) {
   .filtros-reporte {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -961,42 +1029,78 @@ input[type="date"].entrada::-webkit-date-and-time-value {
   }
 
   .filtros-reporte .campo,
-  .filtros-reporte .campo-cajero {
+  .filtros-reporte .campo-cajero,
+  .filtros-reporte .campo-tipo-filtro {
     max-width: none;
     min-width: 0;
   }
 
   .filtros-reporte .rapidos,
   .filtros-reporte .campo-cajero,
+  .filtros-reporte .campo-tipo-filtro,
   .filtros-reporte .btn-actualizar {
     grid-column: 1 / -1;
   }
 
-  /* Los chips pasan arriba: es lo que más se usa en celular. */
+  /* Los botones rápidos arriba: fácil acceso táctil */
   .filtros-reporte .rapidos {
-    order: -1;
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
+    order: -2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
   }
 
   .rapido {
-    min-height: 44px;
-    padding: 0 6px;
-    white-space: normal;
+    flex: 1 1 calc(50% - 6px);
+    min-height: 42px;
+    padding: 0 8px;
+    font-size: 12px;
     text-align: center;
+    justify-content: center;
+  }
+
+  /* El selector de canal debajo de los rápidos */
+  .filtros-reporte .campo-tipo-filtro {
+    order: -1;
+    width: 100%;
+  }
+
+  .selector-tipo-reporte {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+  }
+
+  .selector-tipo-reporte .tipo-btn {
+    min-height: 44px;
+    padding: 6px 2px;
+    font-size: 12px;
+    justify-content: center;
   }
 
   .filtros-reporte .btn-actualizar {
     width: 100%;
-    min-height: 50px;
+    min-height: 48px;
     font-size: 15px;
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 420px) {
   .filtros-reporte {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
+  }
+
+  .rapido {
+    flex: 1 1 calc(50% - 6px);
+    font-size: 11px;
+    padding: 0 4px;
+  }
+
+  .selector-tipo-reporte .tipo-btn {
+    font-size: 11px;
+    gap: 4px;
   }
 }
 

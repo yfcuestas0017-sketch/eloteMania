@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Award,
   BarChart3,
+  Bike,
   Check,
   ChevronRight,
   Flame,
   Printer,
   RefreshCw,
   ShoppingBag,
+  Store,
   TrendingUp,
   UserCheck,
   Users,
@@ -49,6 +51,7 @@ export default function AdminReports() {
   const [error, setError] = useState("");
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState(null);
   const [puntoGrafica, setPuntoGrafica] = useState(null); // día u hora elegidos en la gráfica
+  const [tipoFiltro, setTipoFiltro] = useState("todos"); // "todos" | "local" | "domicilio"
 
   async function consultar(event) {
     if (event) event.preventDefault();
@@ -65,14 +68,15 @@ export default function AdminReports() {
     const filtroCajero = cajeroSeleccionado
       ? `&cajero_id=${encodeURIComponent(cajeroSeleccionado.usuario_id)}`
       : "";
+    const filtroTipo = tipoFiltro !== "todos" ? `&tipo_pedido=${tipoFiltro}` : "";
 
     try {
       const [datosResumen, datosCajeros, datosProductos, datosPedidos] =
         await Promise.all([
-          apiFetch(`/reports/resumen?${rangoBase}${filtroCajero}`),
-          apiFetch(`/reports/ventas-por-cajero?${rangoBase}`),
-          apiFetch(`/reports/productos-mas-vendidos?${rangoBase}${filtroCajero}&limite=10`),
-          apiFetch(`/reports/pedidos-cajero?${rangoBase}${filtroCajero}`)
+          apiFetch(`/reports/resumen?${rangoBase}${filtroCajero}${filtroTipo}`),
+          apiFetch(`/reports/ventas-por-cajero?${rangoBase}${filtroTipo}`),
+          apiFetch(`/reports/productos-mas-vendidos?${rangoBase}${filtroCajero}&limite=10${filtroTipo}`),
+          apiFetch(`/reports/pedidos-cajero?${rangoBase}${filtroCajero}${filtroTipo}`)
         ]);
 
       setResumen(datosResumen);
@@ -88,7 +92,7 @@ export default function AdminReports() {
 
   useEffect(() => {
     consultar();
-  }, [desde, hasta, cajeroSeleccionado]);
+  }, [desde, hasta, cajeroSeleccionado, tipoFiltro]);
 
   function rangoRapido(tipo) {
     const ahora = new Date();
@@ -121,7 +125,7 @@ export default function AdminReports() {
   };
 
   // El punto elegido solo vale mientras no cambien las fechas ni el cajero.
-  const huellaFiltro = `${desde}|${hasta}|${cajeroSeleccionado?.usuario_id ?? "todos"}`;
+  const huellaFiltro = `${desde}|${hasta}|${cajeroSeleccionado?.usuario_id ?? "todos"}|${tipoFiltro}`;
   const historialDia = puntoGrafica?.huella === huellaFiltro ? puntoGrafica : null;
 
   function elegirPuntoGrafica(punto) {
@@ -214,7 +218,7 @@ export default function AdminReports() {
               />
             </div>
 
-            <div className="campo campo-cajero">
+<div className="campo campo-cajero">
               <label htmlFor="r-cajero">Filtrar por cajero</label>
               <select
                 id="r-cajero"
@@ -237,6 +241,41 @@ export default function AdminReports() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="campo campo-tipo-filtro">
+              <label>Canal de venta</label>
+              <div className="selector-tipo-reporte" role="radiogroup" aria-label="Canal de venta">
+                <button
+                  type="button"
+                  className={`tipo-btn ${tipoFiltro === "todos" ? "activo" : ""}`}
+                  onClick={() => setTipoFiltro("todos")}
+                  aria-checked={tipoFiltro === "todos"}
+                  role="radio"
+                >
+                  Todos
+                </button>
+                <button
+                  type="button"
+                  className={`tipo-btn ${tipoFiltro === "local" ? "activo" : ""}`}
+                  onClick={() => setTipoFiltro("local")}
+                  aria-checked={tipoFiltro === "local"}
+                  role="radio"
+                >
+                  <Store size={14} aria-hidden="true" />
+                  En local
+                </button>
+                <button
+                  type="button"
+                  className={`tipo-btn ${tipoFiltro === "domicilio" ? "activo" : ""}`}
+                  onClick={() => setTipoFiltro("domicilio")}
+                  aria-checked={tipoFiltro === "domicilio"}
+                  role="radio"
+                >
+                  <Bike size={14} aria-hidden="true" />
+                  Domicilios
+                </button>
+              </div>
             </div>
 
             <div className="rapidos" role="group" aria-label="Rangos rápidos">
@@ -313,16 +352,32 @@ export default function AdminReports() {
         {resumen && (
           <section className="cifras no-imprimir" aria-label="Cifras clave del período">
             <article className="cifra">
-              <span>{cajeroSeleccionado ? "Recaudo de este cajero" : "Total recaudado"}</span>
+              <span>
+                {cajeroSeleccionado
+                  ? "Recaudo de este cajero"
+                  : tipoFiltro === "local"
+                    ? "Recaudo en local"
+                    : tipoFiltro === "domicilio"
+                      ? "Recaudo en domicilios"
+                      : "Total recaudado"}
+              </span>
               <strong>{pesos(resumen.total_recaudado)}</strong>
-              <small>COP en ventas vigentes</small>
+              <small>
+                {tipoFiltro === "todos" && Number(resumen.cantidad_domicilio) > 0
+                  ? `Local: ${pesos(resumen.total_local)} · Domicilio: ${pesos(resumen.total_domicilio)}`
+                  : "COP en ventas vigentes"}
+              </small>
             </article>
 
             <article className="cifra">
               <span>Pedidos cobrados</span>
               <strong>{resumen.cantidad_ventas}</strong>
               <small>
-                {cajeroSeleccionado ? "Por este cajero" : "En total por el equipo"}
+                {tipoFiltro === "todos"
+                  ? `${resumen.cantidad_local || 0} en local · ${resumen.cantidad_domicilio || 0} domicilios`
+                  : tipoFiltro === "domicilio"
+                    ? `${resumen.cantidad_domicilio || 0} entregas a domicilio`
+                    : `${resumen.cantidad_local || 0} ventas en local`}
               </small>
             </article>
 
@@ -345,6 +400,96 @@ export default function AdminReports() {
         )}
 
         {/* Gráfica de ventas por día: clic en un punto = historial de ese día */}
+        {/* Comparativa visual de canales: Local vs Domicilio */}
+        {resumen && Number(resumen.cantidad_ventas) > 0 && (
+          <section className="tarjeta comparativa-canales-tarjeta no-imprimir">
+            <div className="tarjeta-cabecera-accion">
+              <div className="cabecera-acciones-lado">
+                <ShoppingBag size={20} color="#ea580c" aria-hidden="true" />
+                <h2 className="tarjeta-titulo">Distribución: Ventas en local vs Domicilios</h2>
+              </div>
+              <span className="chip chip-verde">
+                {resumen.cantidad_ventas} pedidos totales · {pesos(resumen.total_recaudado)}
+              </span>
+            </div>
+
+            <div className="comparativa-canales-grid">
+              <div
+                className={`canal-tarjeta ${tipoFiltro === "local" ? "activa" : ""}`}
+                onClick={() => setTipoFiltro(tipoFiltro === "local" ? "todos" : "local")}
+                role="button"
+                tabIndex={0}
+                title="Clic para filtrar solo ventas en local"
+              >
+                <div className="canal-tarjeta-cab">
+                  <div className="canal-icono local">
+                    <Store size={22} />
+                  </div>
+                  <div>
+                    <strong>Ventas en mostrador / local</strong>
+                    <small>{resumen.cantidad_local || 0} pedidos cobrados</small>
+                  </div>
+                </div>
+                <div className="canal-tarjeta-monto">
+                  <strong>{pesos(resumen.total_local || 0)}</strong>
+                  <span>
+                    {Number(resumen.total_recaudado) > 0
+                      ? Math.round((Number(resumen.total_local || 0) / Number(resumen.total_recaudado)) * 100)
+                      : 0}% del recaudo
+                  </span>
+                </div>
+                <div className="canal-barra-progreso">
+                  <div
+                    className="canal-barra-relleno local"
+                    style={{
+                      width: `${Number(resumen.total_recaudado) > 0 ? (Number(resumen.total_local || 0) / Number(resumen.total_recaudado)) * 100 : 0}%`
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div
+                className={`canal-tarjeta ${tipoFiltro === "domicilio" ? "activa" : ""}`}
+                onClick={() => setTipoFiltro(tipoFiltro === "domicilio" ? "todos" : "domicilio")}
+                role="button"
+                tabIndex={0}
+                title="Clic para filtrar solo pedidos a domicilio"
+              >
+                <div className="canal-tarjeta-cab">
+                  <div className="canal-icono domicilio">
+                    <Bike size={22} />
+                  </div>
+                  <div>
+                    <strong>Pedidos a domicilio</strong>
+                    <small>{resumen.cantidad_domicilio || 0} pedidos entregados</small>
+                  </div>
+                </div>
+                <div className="canal-tarjeta-monto">
+                  <strong>{pesos(resumen.total_domicilio || 0)}</strong>
+                  <span>
+                    {Number(resumen.total_recaudado) > 0
+                      ? Math.round((Number(resumen.total_domicilio || 0) / Number(resumen.total_recaudado)) * 100)
+                      : 0}% del recaudo
+                  </span>
+                </div>
+                <div className="canal-barra-progreso">
+                  <div
+                    className="canal-barra-relleno domicilio"
+                    style={{
+                      width: `${Number(resumen.total_recaudado) > 0 ? (Number(resumen.total_domicilio || 0) / Number(resumen.total_recaudado)) * 100 : 0}%`
+                    }}
+                  />
+                </div>
+                {Number(resumen.total_costo_domicilio) > 0 && (
+                  <div className="canal-sub-envio">
+                    🛵 Incluye <strong>{pesos(resumen.total_costo_domicilio)}</strong> recaudados por costo de envío
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
         <GraficaVentas
           key={huellaFiltro}
           pedidos={pedidosRecientes}
@@ -352,9 +497,10 @@ export default function AdminReports() {
           hasta={hasta}
           cargando={cargando}
           titulo={
-            cajeroSeleccionado
+            (cajeroSeleccionado
               ? `${cajeroSeleccionado.nombres} ${cajeroSeleccionado.apellidos || ""}`.trim()
-              : "Todos los cajeros"
+              : "Todos los cajeros") +
+            (tipoFiltro === "local" ? " · En local" : tipoFiltro === "domicilio" ? " · Domicilios" : "")
           }
           seleccion={historialDia?.clave ?? null}
           onSeleccionar={elegirPuntoGrafica}
@@ -438,7 +584,14 @@ export default function AdminReports() {
                     </div>
 
                     <div className="barra-sub">
-                      <span>{cajero.cantidad_ventas} pedidos cobrados</span>
+                      <span>
+                        {cajero.cantidad_ventas} pedidos cobrados
+                        {tipoFiltro === "todos" && (cajero.ventas_domicilio > 0 || cajero.ventas_local > 0) && (
+                          <span style={{ color: "var(--apagado)", marginLeft: 6 }}>
+                            ({cajero.ventas_local || 0} local · {cajero.ventas_domicilio || 0} dom.)
+                          </span>
+                        )}
+                      </span>
                       <strong>{participacionGlobal}% del total</strong>
                     </div>
                   </div>
@@ -663,11 +816,29 @@ export default function AdminReports() {
                   <tr key={pedido.venta_id}>
                     <td className="celda-titulo">
                       <div>
-                        <strong>{etiquetaPedido(pedido)}</strong>
-                        <br />
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <strong>{etiquetaPedido(pedido)}</strong>
+                          {pedido.tipo_pedido === "domicilio" ? (
+                            <span className="chip chip-naranja" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                              🛵 Domicilio
+                            </span>
+                          ) : (
+                            <span className="chip chip-gris" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                              Local
+                            </span>
+                          )}
+                        </div>
                         <small className="caja-comprobante-tag">
                           {pedido.numero_comprobante}
                         </small>
+                        {pedido.tipo_pedido === "domicilio" && pedido.nombre_cliente_domicilio && (
+                          <div style={{ fontSize: "11px", color: "var(--apagado)", marginTop: "3px", lineHeight: "1.3" }}>
+                            👤 {pedido.nombre_cliente_domicilio}
+                            {pedido.telefono_domicilio && <span> · 📞 {pedido.telefono_domicilio}</span>}
+                            <br />
+                            📍 {pedido.direccion_domicilio}{pedido.barrio_domicilio ? ` (${pedido.barrio_domicilio})` : ""}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td data-label="Fecha y hora">

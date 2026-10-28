@@ -910,3 +910,195 @@
     flex-wrap: wrap;
   }
 }
+
+/* ---------- Selector de tipo de pedido (Local / Domicilio) ---------- */
+
+.pos-tipo-selector {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+}
+
+.pos-tipo-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--apagado);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 160ms var(--ease-salida);
+}
+
+.pos-tipo-btn:hover:not(.activo) {
+  color: var(--tinta);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.pos-tipo-btn.activo {
+  background: var(--blanco);
+  color: var(--rojo);
+  border-color: var(--linea);
+  box-shadow: 0 2px 6px rgba(41, 34, 31, 0.08);
+}
+
+/* ---------- Sección de datos de domicilio ---------- */
+
+.pos-domicilio-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px solid #fed7aa;
+  border-radius: var(--radio-m);
+  background: #fffaf5;
+}
+
+.pos-domicilio-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.pos-domicilio-seccion .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pos-domicilio-seccion .campo label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+.pos-domicilio-seccion .entrada {
+  min-height: 38px;
+  padding: 7px 10px;
+  font-size: 12px;
+  background: #fff;
+  border-color: #fdba74;
+}
+
+.pos-domicilio-seccion .entrada:focus {
+  border-color: #ea580c;
+  outline-color: #ea580c;
+}
+
+/* ---------- Etiquetas y filas del comprobante ---------- */
+
+.comprobante-tipo-etiqueta {
+  display: flex;
+  justify-content: center;
+  margin: -6px 0 10px;
+}
+
+.comprobante-tag-domicilio {
+  display: inline-block;
+  padding: 3px 12px;
+  background: #ffedd5;
+  color: #c2410c;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border-radius: 100px;
+  text-transform: uppercase;
+  border: 1px dashed #ea580c;
+}
+
+.comprobante-tag-local {
+  display: inline-block;
+  padding: 3px 12px;
+  background: var(--verde-suave);
+  color: var(--verde);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border-radius: 100px;
+  text-transform: uppercase;
+}
+
+.comprobante-fila-domicilio {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px dashed #d9d9d9;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+/* ---------- Barra flotante para celular en POS ---------- */
+
+.pos-barra-flotante-movil {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .pos-barra-flotante-movil {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 99;
+    display: block;
+    animation: fadeIn 200ms ease;
+  }
+
+  .pos-btn-flotante {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 52px;
+    padding: 0 20px;
+    border-radius: var(--radio-m);
+    box-shadow: 0 8px 24px rgba(213, 9, 24, 0.4);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .caja-pagina {
+    padding-bottom: 74px; /* Evita que la barra flotante tape el final */
+  }
+
+  .pos-tipo-btn {
+    min-height: 46px;
+    font-size: 14px;
+  }
+
+  .pos-metodos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+  }
+
+  .pos-metodos button {
+    min-height: 48px;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+
+  .pos-producto-agregar {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  .pos-linea-total .btn-icono {
+    min-width: 38px;
+    min-height: 38px;
+  }
+}

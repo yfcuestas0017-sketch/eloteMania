@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Bike,
   Calendar,
   ChefHat,
   CreditCard,
@@ -7,7 +8,8 @@ import {
   Printer,
   RefreshCw,
   Search,
-  ShoppingBag
+  ShoppingBag,
+  Store
 } from "lucide-react";
 import AppShell from "../components/AppShell";
 import ComprobanteModal from "../components/ComprobanteModal";
@@ -37,6 +39,7 @@ export default function CashierReports() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState(null);
+  const [tipoFiltro, setTipoFiltro] = useState("todos"); // "todos" | "local" | "domicilio"
 
   async function consultar(e) {
     if (e) e.preventDefault();
@@ -50,7 +53,8 @@ export default function CashierReports() {
     setCargando(true);
 
     try {
-      const rango = `desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`;
+      const filtroTipo = tipoFiltro !== "todos" ? `&tipo_pedido=${tipoFiltro}` : "";
+      const rango = `desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}${filtroTipo}`;
       const datos = await apiFetch(`/reports/pedidos-cajero?${rango}`);
       setPedidos(datos || []);
     } catch (err) {
@@ -62,7 +66,7 @@ export default function CashierReports() {
 
   useEffect(() => {
     consultar();
-  }, [desde, hasta]);
+  }, [desde, hasta, tipoFiltro]);
 
   function rangoRapido(tipo) {
     const dia = (restar) => {
@@ -88,9 +92,14 @@ export default function CashierReports() {
 
   const pedidosFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    if (!q) return pedidos;
+    const filtradosPorTipo = pedidos.filter((p) => {
+      if (tipoFiltro === "todos") return true;
+      return (p.tipo_pedido || "local") === tipoFiltro;
+    });
 
-    return pedidos.filter((p) => {
+    if (!q) return filtradosPorTipo;
+
+    return filtradosPorTipo.filter((p) => {
       const numPedido = `${p.numero_pedido || ""} ${p.numero_dia || ""}`.toLowerCase();
       const numComp = (p.numero_comprobante || "").toLowerCase();
       const metodo = (p.metodo_pago || "").toLowerCase();
@@ -98,10 +107,17 @@ export default function CashierReports() {
         (item.nombre || item.nombre_producto || "").toLowerCase().includes(q)
       );
 
+      const cliente = (p.nombre_cliente_domicilio || "").toLowerCase();
+      const direccion = `${p.direccion_domicilio || ""} ${p.barrio_domicilio || ""}`.toLowerCase();
+      const tipo = (p.tipo_pedido || "").toLowerCase();
+
       return (
         numPedido.includes(q) ||
         numComp.includes(q) ||
         metodo.includes(q) ||
+        cliente.includes(q) ||
+        direccion.includes(q) ||
+        tipo.includes(q) ||
         tieneProducto
       );
     });
@@ -114,6 +130,19 @@ export default function CashierReports() {
 
   const cantidadVentas = pedidosFiltrados.length;
   const promedioVenta = cantidadVentas > 0 ? totalRecaudado / cantidadVentas : 0;
+
+  const estadisticasLocal = useMemo(() => {
+    const list = pedidos.filter((p) => (p.tipo_pedido || "local") === "local");
+    const total = list.reduce((acc, p) => acc + Number(p.total || 0), 0);
+    return { cantidad: list.length, total };
+  }, [pedidos]);
+
+  const estadisticasDomicilio = useMemo(() => {
+    const list = pedidos.filter((p) => p.tipo_pedido === "domicilio");
+    const total = list.reduce((acc, p) => acc + Number(p.total || 0), 0);
+    const costoEnvios = list.reduce((acc, p) => acc + Number(p.costo_domicilio || 0), 0);
+    return { cantidad: list.length, total, costoEnvios };
+  }, [pedidos]);
 
   function actualizarContadorImpresion(comprobanteId, nuevoConteo) {
     setPedidos((prev) =>
@@ -169,6 +198,41 @@ export default function CashierReports() {
               />
             </div>
 
+            <div className="campo campo-tipo-filtro">
+              <label>Canal de venta</label>
+              <div className="selector-tipo-reporte" role="radiogroup" aria-label="Canal de venta">
+                <button
+                  type="button"
+                  className={`tipo-btn ${tipoFiltro === "todos" ? "activo" : ""}`}
+                  onClick={() => setTipoFiltro("todos")}
+                  aria-checked={tipoFiltro === "todos"}
+                  role="radio"
+                >
+                  Todos
+                </button>
+                <button
+                  type="button"
+                  className={`tipo-btn ${tipoFiltro === "local" ? "activo" : ""}`}
+                  onClick={() => setTipoFiltro("local")}
+                  aria-checked={tipoFiltro === "local"}
+                  role="radio"
+                >
+                  <Store size={14} aria-hidden="true" />
+                  En local
+                </button>
+                <button
+                  type="button"
+                  className={`tipo-btn ${tipoFiltro === "domicilio" ? "activo" : ""}`}
+                  onClick={() => setTipoFiltro("domicilio")}
+                  aria-checked={tipoFiltro === "domicilio"}
+                  role="radio"
+                >
+                  <Bike size={14} aria-hidden="true" />
+                  Domicilios
+                </button>
+              </div>
+            </div>
+
             <div className="rapidos" role="group" aria-label="Rangos rápidos">
               {[
                 ["hoy", "Hoy"],
@@ -201,22 +265,40 @@ export default function CashierReports() {
         {/* Resumen numérico */}
         <section className="cifras no-imprimir" aria-label="Resumen de pedidos cobrados">
           <article className="cifra">
-            <span>Total cobrado</span>
+            <span>Total cobrado {tipoFiltro === "local" ? "(Local)" : tipoFiltro === "domicilio" ? "(Domicilio)" : ""}</span>
             <strong>{pesos(totalRecaudado)}</strong>
-            <small>COP</small>
+            <small>
+              {tipoFiltro === "todos" && estadisticasDomicilio.cantidad > 0
+                ? `Local: ${pesos(estadisticasLocal.total)} · Domicilio: ${pesos(estadisticasDomicilio.total)}`
+                : "COP en ventas"}
+            </small>
           </article>
 
           <article className="cifra">
             <span>Pedidos cobrados</span>
             <strong>{cantidadVentas}</strong>
-            <small>En el período seleccionado</small>
+            <small>
+              {tipoFiltro === "todos"
+                ? `${estadisticasLocal.cantidad} en local · ${estadisticasDomicilio.cantidad} a domicilio`
+                : tipoFiltro === "domicilio"
+                  ? `${estadisticasDomicilio.cantidad} entregas a domicilio`
+                  : `${estadisticasLocal.cantidad} en mostrador`}
+            </small>
           </article>
 
           <article className="cifra">
             <span>Ticket promedio</span>
             <strong>{pesos(promedioVenta)}</strong>
-            <small>Por pedido cobrado</small>
+            <small>Por venta cobrada</small>
           </article>
+
+          {estadisticasDomicilio.costoEnvios > 0 && tipoFiltro !== "local" && (
+            <article className="cifra">
+              <span>Recaudo por envíos</span>
+              <strong>{pesos(estadisticasDomicilio.costoEnvios)}</strong>
+              <small>Costo de domicilios cobrados</small>
+            </article>
+          )}
         </section>
 
         {/* Listado de pedidos con reimpresión de voucher */}
@@ -253,11 +335,29 @@ export default function CashierReports() {
                   <tr key={pedido.venta_id}>
                     <td className="celda-titulo">
                       <div>
-                        <strong>{etiquetaPedido(pedido)}</strong>
-                        <br />
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <strong>{etiquetaPedido(pedido)}</strong>
+                          {pedido.tipo_pedido === "domicilio" ? (
+                            <span className="chip chip-naranja" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                              🛵 Domicilio
+                            </span>
+                          ) : (
+                            <span className="chip chip-gris" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                              Local
+                            </span>
+                          )}
+                        </div>
                         <small className="caja-comprobante-tag">
                           {pedido.numero_comprobante}
                         </small>
+                        {pedido.tipo_pedido === "domicilio" && pedido.nombre_cliente_domicilio && (
+                          <div style={{ fontSize: "11px", color: "var(--apagado)", marginTop: "3px", lineHeight: "1.3" }}>
+                            👤 {pedido.nombre_cliente_domicilio}
+                            {pedido.telefono_domicilio && <span> · 📞 {pedido.telefono_domicilio}</span>}
+                            <br />
+                            📍 {pedido.direccion_domicilio}{pedido.barrio_domicilio ? ` (${pedido.barrio_domicilio})` : ""}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td data-label="Fecha y hora">

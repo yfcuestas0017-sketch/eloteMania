@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Banknote,
+  Bike,
   Check,
   CreditCard,
   Minus,
   Plus,
   Printer,
   Search,
+  Store,
   Trash2
 } from "lucide-react";
 import AppShell from "../components/AppShell";
@@ -46,6 +48,12 @@ export default function CashierPOS() {
   const [cargando, setCargando] = useState(true);
   const [confirmando, setConfirmando] = useState(false);
   const [error, setError] = useState("");
+  const [tipoPedido, setTipoPedido] = useState("local");
+  const [nombreCliente, setNombreCliente] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [barrio, setBarrio] = useState("");
+  const [costoDomicilio, setCostoDomicilio] = useState("");
 
   useEffect(() => {
     async function cargarDatos() {
@@ -238,12 +246,21 @@ export default function CashierPOS() {
     setCarrito([]);
     setEfectivo("");
     setError("");
+    setTipoPedido("local");
+    setNombreCliente("");
+    setTelefono("");
+    setDireccion("");
+    setBarrio("");
+    setCostoDomicilio("");
   }
 
-  const total = carrito.reduce(
+  const subtotalProductos = carrito.reduce(
     (suma, item) => suma + Number(item.precio) * item.cantidad,
     0
   );
+  const valorCostoDomicilio =
+    tipoPedido === "domicilio" ? Math.max(0, Number(costoDomicilio) || 0) : 0;
+  const total = subtotalProductos + valorCostoDomicilio;
   const unidades = carrito.reduce((suma, item) => suma + item.cantidad, 0);
 
   const nombreMetodo =
@@ -261,6 +278,29 @@ export default function CashierPOS() {
     if (carrito.length === 0) {
       setError("Agrega al menos un producto al pedido.");
       return;
+    }
+
+    if (tipoPedido === "domicilio") {
+      if (!nombreCliente.trim()) {
+        setError("Indica a nombre de quién va el pedido a domicilio.");
+        return;
+      }
+      if (!telefono.trim()) {
+        setError("Indica el teléfono de contacto para el domicilio.");
+        return;
+      }
+      if (!direccion.trim()) {
+        setError("Indica la dirección del domicilio.");
+        return;
+      }
+      if (!barrio.trim()) {
+        setError("Indica el barrio del domicilio.");
+        return;
+      }
+      if (costoDomicilio !== "" && Number(costoDomicilio) < 0) {
+        setError("El costo del domicilio no puede ser negativo.");
+        return;
+      }
     }
 
     if (!metodoPago) {
@@ -309,6 +349,12 @@ export default function CashierPOS() {
         method: "POST",
         body: JSON.stringify({
           metodo_pago_id: Number(metodoPago),
+          tipo_pedido: tipoPedido,
+          direccion_domicilio: tipoPedido === "domicilio" ? direccion.trim() : null,
+          barrio_domicilio: tipoPedido === "domicilio" ? barrio.trim() : null,
+          telefono_domicilio: tipoPedido === "domicilio" ? telefono.trim() : null,
+          nombre_cliente_domicilio: tipoPedido === "domicilio" ? nombreCliente.trim() : null,
+          costo_domicilio: valorCostoDomicilio,
           productos: carrito
             .filter((producto) => producto.tipo_item === "producto")
             .map((producto) => ({
@@ -372,12 +418,24 @@ export default function CashierPOS() {
           esEfectivo(nombreMetodoPago) && recibido > 0
             ? recibido - Number(totalCobrado)
             : null,
-        productos: productosVendidos
+        productos: productosVendidos,
+        tipo_pedido: tipoPedido,
+        direccion_domicilio: tipoPedido === "domicilio" ? direccion.trim() : null,
+        barrio_domicilio: tipoPedido === "domicilio" ? barrio.trim() : null,
+        telefono_domicilio: tipoPedido === "domicilio" ? telefono.trim() : null,
+        nombre_cliente_domicilio: tipoPedido === "domicilio" ? nombreCliente.trim() : null,
+        costo_domicilio: valorCostoDomicilio
       });
 
       setCarrito([]);
       setMetodoPago("");
       setEfectivo("");
+      setTipoPedido("local");
+      setNombreCliente("");
+      setTelefono("");
+      setDireccion("");
+      setBarrio("");
+      setCostoDomicilio("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -466,6 +524,11 @@ export default function CashierPOS() {
                   <p className="comprobante-numero">
                     {comprobante.numero_dia ? `Pedido N° ${comprobante.numero_dia}` : comprobante.numero_pedido}
                   </p>
+                  <div className="comprobante-tipo-etiqueta">
+                    <span className={comprobante.tipo_pedido === "domicilio" ? "comprobante-tag-domicilio" : "comprobante-tag-local"}>
+                      {comprobante.tipo_pedido === "domicilio" ? "🛵 DOMICILIO" : "🏪 EN LOCAL"}
+                    </span>
+                  </div>
                   <div className="comprobante-datos">
                     <div className="comprobante-fila">
                       <span>Fecha / hora</span>
@@ -475,6 +538,26 @@ export default function CashierPOS() {
                       <span>Cajero</span>
                       <strong>{comprobante.cajero}</strong>
                     </div>
+                    {comprobante.tipo_pedido === "domicilio" && (
+                      <>
+                        <div className="comprobante-fila">
+                          <span>A nombre de</span>
+                          <strong>{comprobante.nombre_cliente_domicilio}</strong>
+                        </div>
+                        <div className="comprobante-fila">
+                          <span>Teléfono</span>
+                          <strong>{comprobante.telefono_domicilio}</strong>
+                        </div>
+                        <div className="comprobante-fila">
+                          <span>Dirección</span>
+                          <strong>{comprobante.direccion_domicilio}</strong>
+                        </div>
+                        <div className="comprobante-fila">
+                          <span>Barrio</span>
+                          <strong>{comprobante.barrio_domicilio}</strong>
+                        </div>
+                      </>
+                    )}
                     <div className="comprobante-fila">
                       <span>Comprobante</span>
                       <strong>{comprobante.numero_comprobante}</strong>
@@ -505,6 +588,12 @@ export default function CashierPOS() {
                       </div>
                     ))}
                   </div>
+                  {comprobante.tipo_pedido === "domicilio" && Number(comprobante.costo_domicilio) > 0 && (
+                    <div className="comprobante-fila comprobante-fila-domicilio">
+                      <span>Costo de domicilio</span>
+                      <strong>{pesos(comprobante.costo_domicilio)}</strong>
+                    </div>
+                  )}
                   <div className="comprobante-total">
                     <span>TOTAL COBRADO</span>
                     <strong>{pesos(comprobante.total)}</strong>
@@ -702,7 +791,7 @@ export default function CashierPOS() {
             )}
           </section>
 
-          <form className="tarjeta pos-pedido" onSubmit={confirmarVenta}>
+          <form id="seccion-pedido-actual" className="tarjeta pos-pedido" onSubmit={confirmarVenta}>
             <div className="pos-pedido-cabecera">
               <h2>Pedido actual</h2>
               {unidades > 0 && (
@@ -712,14 +801,116 @@ export default function CashierPOS() {
               )}
             </div>
 
+            <div className="pos-tipo-selector" role="radiogroup" aria-label="Tipo de pedido">
+              <button
+                type="button"
+                className={`pos-tipo-btn ${tipoPedido === "local" ? "activo" : ""}`}
+                onClick={() => setTipoPedido("local")}
+                aria-checked={tipoPedido === "local"}
+                role="radio"
+              >
+                <Store size={15} aria-hidden="true" />
+                <span>En local</span>
+              </button>
+              <button
+                type="button"
+                className={`pos-tipo-btn ${tipoPedido === "domicilio" ? "activo" : ""}`}
+                onClick={() => setTipoPedido("domicilio")}
+                aria-checked={tipoPedido === "domicilio"}
+                role="radio"
+              >
+                <Bike size={15} aria-hidden="true" />
+                <span>A domicilio</span>
+              </button>
+            </div>
+
             <div className="pos-pedido-sub">
-              <span>Cliente: Mostrador</span>
+              <span>
+                {tipoPedido === "domicilio"
+                  ? `Domicilio ${nombreCliente.trim() ? "· " + nombreCliente.trim() : ""}`
+                  : "Cliente: Mostrador"}
+              </span>
               {carrito.length > 0 && (
                 <button type="button" className="btn-enlace" onClick={vaciarPedido}>
                   Vaciar
                 </button>
               )}
             </div>
+
+            {tipoPedido === "domicilio" && (
+              <div className="pos-domicilio-seccion">
+                <div className="pos-domicilio-titulo">
+                  <Bike size={16} />
+                  <span>Datos del domicilio</span>
+                </div>
+
+                <div className="campo">
+                  <label htmlFor="pos-nombre-cliente">A nombre de quién *</label>
+                  <input
+                    id="pos-nombre-cliente"
+                    className="entrada"
+                    type="text"
+                    maxLength={150}
+                    placeholder="Ej. Juan Pérez"
+                    value={nombreCliente}
+                    onChange={(e) => setNombreCliente(e.target.value)}
+                  />
+                </div>
+
+                <div className="campo">
+                  <label htmlFor="pos-telefono">Teléfono *</label>
+                  <input
+                    id="pos-telefono"
+                    className="entrada"
+                    type="tel"
+                    maxLength={30}
+                    placeholder="Ej. 300 123 4567"
+                    value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
+                  />
+                </div>
+
+                <div className="campo">
+                  <label htmlFor="pos-direccion">Dirección *</label>
+                  <input
+                    id="pos-direccion"
+                    className="entrada"
+                    type="text"
+                    maxLength={250}
+                    placeholder="Ej. Calle 10 # 20-30 Apto 201"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
+                  />
+                </div>
+
+                <div className="campo">
+                  <label htmlFor="pos-barrio">Barrio *</label>
+                  <input
+                    id="pos-barrio"
+                    className="entrada"
+                    type="text"
+                    maxLength={150}
+                    placeholder="Ej. La Floresta"
+                    value={barrio}
+                    onChange={(e) => setBarrio(e.target.value)}
+                  />
+                </div>
+
+                <div className="campo">
+                  <label htmlFor="pos-costo-domicilio">Costo del domicilio (COP)</label>
+                  <input
+                    id="pos-costo-domicilio"
+                    className="entrada"
+                    type="number"
+                    min="0"
+                    step="500"
+                    placeholder="0"
+                    value={costoDomicilio}
+                    onChange={(e) => setCostoDomicilio(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
 
             {carrito.length === 0 ? (
               <p className="pos-vacio">
@@ -805,9 +996,15 @@ export default function CashierPOS() {
 
             <dl className="pos-totales">
               <div>
-                <dt>Subtotal</dt>
-                <dd>{pesos(total)}</dd>
+                <dt>Subtotal productos</dt>
+                <dd>{pesos(subtotalProductos)}</dd>
               </div>
+              {tipoPedido === "domicilio" && (
+                <div>
+                  <dt>Costo domicilio</dt>
+                  <dd>{pesos(valorCostoDomicilio)}</dd>
+                </div>
+              )}
               <div className="pos-total-final">
                 <dt>Total a cobrar</dt>
                 <dd>{pesos(total)}</dd>
@@ -882,6 +1079,21 @@ export default function CashierPOS() {
             </p>
           </form>
         </div>
+
+        {unidades > 0 && (
+          <aside className="pos-barra-flotante-movil no-imprimir">
+            <button
+              type="button"
+              className="btn btn-primario pos-btn-flotante"
+              onClick={() => {
+                document.getElementById("seccion-pedido-actual")?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              <span>🛒 Ver pedido ({unidades})</span>
+              <strong>{pesos(total)} →</strong>
+            </button>
+          </aside>
+        )}
 
       </div>
     </AppShell>

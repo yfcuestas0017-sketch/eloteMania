@@ -70,7 +70,13 @@ export async function checkout(req, res) {
   const {
     metodo_pago_id,
     productos = [],
-    adicionales: adicionalesIndependientes = []
+    adicionales: adicionalesIndependientes = [],
+    tipo_pedido = "local",
+    direccion_domicilio,
+    barrio_domicilio,
+    telefono_domicilio,
+    nombre_cliente_domicilio,
+    costo_domicilio = 0
   } = req.body;
 
   if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
@@ -92,6 +98,55 @@ export async function checkout(req, res) {
     return res.status(400).json({
       mensaje: "Selecciona un método de pago válido."
     });
+  }
+
+  // Validar tipo de pedido.
+  const tipoPedido = String(tipo_pedido || "local").trim().toLowerCase();
+  if (tipoPedido !== "local" && tipoPedido !== "domicilio") {
+    return res.status(400).json({
+      mensaje: "El tipo de pedido debe ser 'local' o 'domicilio'."
+    });
+  }
+
+  const costoDomicilio = tipoPedido === "domicilio"
+    ? Math.round(Number(costo_domicilio || 0) * 100)
+    : 0;
+
+  if (tipoPedido === "domicilio") {
+    const direccion = String(direccion_domicilio || "").trim();
+    const barrio = String(barrio_domicilio || "").trim();
+    const telefono = String(telefono_domicilio || "").trim();
+    const nombreCliente = String(nombre_cliente_domicilio || "").trim();
+
+    if (!direccion) {
+      return res.status(400).json({
+        mensaje: "Debes indicar la dirección del domicilio."
+      });
+    }
+
+    if (!barrio) {
+      return res.status(400).json({
+        mensaje: "Debes indicar el barrio del domicilio."
+      });
+    }
+
+    if (!telefono) {
+      return res.status(400).json({
+        mensaje: "Debes indicar el teléfono de contacto."
+      });
+    }
+
+    if (!nombreCliente) {
+      return res.status(400).json({
+        mensaje: "Debes indicar a nombre de quién va el pedido."
+      });
+    }
+
+    if (costoDomicilio < 0) {
+      return res.status(400).json({
+        mensaje: "El costo del domicilio no puede ser negativo."
+      });
+    }
   }
 
   // Combina productos repetidos para evitar líneas duplicadas.
@@ -254,7 +309,11 @@ export async function checkout(req, res) {
 
     // 1) Crear el pedido en estado "pendiente".
     const pedidoCreado = await cliente.query(
-      `INSERT INTO pedidos (numero_pedido, numero_dia, cajero_id)
+      `INSERT INTO pedidos (
+         numero_pedido, numero_dia, cajero_id,
+         tipo_pedido, direccion_domicilio, barrio_domicilio,
+         telefono_domicilio, nombre_cliente_domicilio, costo_domicilio
+       )
        VALUES (
          'P-' || TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISS')
               || '-' || SUBSTR(MD5(RANDOM()::TEXT), 1, 4),
@@ -264,10 +323,24 @@ export async function checkout(req, res) {
            WHERE (fecha_pedido AT TIME ZONE 'America/Bogota')::date
                = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
          ),
-         $1
+         $1,
+         $2,
+         $3,
+         $4,
+         $5,
+         $6,
+         $7
        )
        RETURNING pedido_id, numero_pedido, numero_dia`,
-      [usuarioId]
+      [
+        usuarioId,
+        tipoPedido,
+        tipoPedido === "domicilio" ? String(direccion_domicilio || "").trim().slice(0, 250) : null,
+        tipoPedido === "domicilio" ? String(barrio_domicilio || "").trim().slice(0, 150) : null,
+        tipoPedido === "domicilio" ? String(telefono_domicilio || "").trim().slice(0, 30) : null,
+        tipoPedido === "domicilio" ? String(nombre_cliente_domicilio || "").trim().slice(0, 150) : null,
+        (costoDomicilio / 100).toFixed(2)
+      ]
     );
 
     const pedido = pedidoCreado.rows[0];
@@ -277,7 +350,7 @@ export async function checkout(req, res) {
       productosBD.rows.map((p) => [Number(p.producto_id), p])
     );
 
-    let totalCentavos = 0;
+    let totalCentavos = costoDomicilio;
 
     for (const item of productos) {
       const p = porId.get(Number(item.producto_id));
@@ -400,14 +473,28 @@ export async function checkout(req, res) {
       pedido: {
         pedido_id: pedido.pedido_id,
         numero_pedido: pedido.numero_pedido,
-        numero_dia: pedido.numero_dia
+        numero_dia: pedido.numero_dia,
+        tipo_pedido: tipoPedido,
+        ...(tipoPedido === "domicilio" && {
+          direccion_domicilio: String(direccion_domicilio || "").trim(),
+          barrio_domicilio: String(barrio_domicilio || "").trim(),
+          telefono_domicilio: String(telefono_domicilio || "").trim(),
+          nombre_cliente_domicilio: String(nombre_cliente_domicilio || "").trim(),
+          costo_domicilio: (costoDomicilio / 100).toFixed(2)
+        })
       },
       venta_id: resultado.resultado_venta_id,
       comprobante: {
         ...comprobanteConsulta.rows[0],
         total: resultado.resultado_total,
         numero_pedido: pedido.numero_pedido,
-        numero_dia: pedido.numero_dia
+        numero_dia: pedido.numero_dia,
+        tipo_pedido: tipoPedido,
+        direccion_domicilio: tipoPedido === "domicilio" ? String(direccion_domicilio || "").trim() : null,
+        barrio_domicilio: tipoPedido === "domicilio" ? String(barrio_domicilio || "").trim() : null,
+        telefono_domicilio: tipoPedido === "domicilio" ? String(telefono_domicilio || "").trim() : null,
+        nombre_cliente_domicilio: tipoPedido === "domicilio" ? String(nombre_cliente_domicilio || "").trim() : null,
+        costo_domicilio: tipoPedido === "domicilio" ? (costoDomicilio / 100).toFixed(2) : "0.00"
       }
     });
   } catch (error) {

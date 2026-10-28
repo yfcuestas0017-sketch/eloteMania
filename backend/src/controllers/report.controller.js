@@ -43,17 +43,27 @@ export async function obtenerResumen(req, res) {
     const filtrarCajero = !esAdmin || cajeroParam !== null;
     const cajeroId = !esAdmin ? Number(req.user.usuario_id) : (cajeroParam || 0);
 
+    const tipoPedido = String(req.query.tipo_pedido || "todos").trim().toLowerCase();
+    const filtrarTipo = tipoPedido === "local" || tipoPedido === "domicilio";
+
     const resultado = await query(
       `SELECT
          COUNT(*)::int AS cantidad_ventas,
          COALESCE(SUM(v.total), 0) AS total_recaudado,
-         COALESCE(AVG(v.total), 0) AS promedio_venta
+         COALESCE(AVG(v.total), 0) AS promedio_venta,
+         COUNT(CASE WHEN p.tipo_pedido = 'local' THEN 1 END)::int AS cantidad_local,
+         COALESCE(SUM(CASE WHEN p.tipo_pedido = 'local' THEN v.total END), 0) AS total_local,
+         COUNT(CASE WHEN p.tipo_pedido = 'domicilio' THEN 1 END)::int AS cantidad_domicilio,
+         COALESCE(SUM(CASE WHEN p.tipo_pedido = 'domicilio' THEN v.total END), 0) AS total_domicilio,
+         COALESCE(SUM(CASE WHEN p.tipo_pedido = 'domicilio' THEN p.costo_domicilio END), 0) AS total_costo_domicilio
        FROM ventas v
+       JOIN pedidos p ON p.pedido_id = v.pedido_id
        WHERE v.estado = 'vigente'
          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
              BETWEEN $1::date AND $2::date
-         AND ($3::boolean = FALSE OR v.cajero_id = $4::bigint)`,
-      [rango.desde, rango.hasta, filtrarCajero, cajeroId]
+         AND ($3::boolean = FALSE OR v.cajero_id = $4::bigint)
+         AND ($5::boolean = FALSE OR p.tipo_pedido = $6::varchar)`,
+      [rango.desde, rango.hasta, filtrarCajero, cajeroId, filtrarTipo, tipoPedido]
     );
 
     res.json(resultado.rows[0]);
@@ -62,26 +72,34 @@ export async function obtenerResumen(req, res) {
     res.status(500).json({ mensaje: "No se pudo generar el resumen." });
   }
 }
+
 export async function obtenerVentasPorCajero(req, res) {
   const rango = obtenerRango(req, res);
   if (!rango) return;
 
   try {
+    const tipoPedido = String(req.query.tipo_pedido || "todos").trim().toLowerCase();
+    const filtrarTipo = tipoPedido === "local" || tipoPedido === "domicilio";
+
     const resultado = await query(
       `SELECT
          u.usuario_id,
          COALESCE(u.nombres, 'Usuario eliminado') AS nombres,
          u.apellidos,
          COUNT(v.venta_id)::int AS cantidad_ventas,
-         COALESCE(SUM(v.total), 0) AS total_recaudado
+         COALESCE(SUM(v.total), 0) AS total_recaudado,
+         COUNT(CASE WHEN p.tipo_pedido = 'local' THEN 1 END)::int AS ventas_local,
+         COUNT(CASE WHEN p.tipo_pedido = 'domicilio' THEN 1 END)::int AS ventas_domicilio
        FROM ventas v
+       JOIN pedidos p ON p.pedido_id = v.pedido_id
        LEFT JOIN usuarios u ON u.usuario_id = v.cajero_id
        WHERE v.estado = 'vigente'
          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
              BETWEEN $1::date AND $2::date
+         AND ($3::boolean = FALSE OR p.tipo_pedido = $4::varchar)
        GROUP BY u.usuario_id, u.nombres, u.apellidos
        ORDER BY total_recaudado DESC`,
-      [rango.desde, rango.hasta]
+      [rango.desde, rango.hasta, filtrarTipo, tipoPedido]
     );
 
     res.json(resultado.rows);
@@ -104,6 +122,9 @@ export async function obtenerProductosMasVendidos(req, res) {
     const filtrarCajero = !esAdmin ? true : cajeroParam !== null;
     const cajeroId = !esAdmin ? Number(req.user.usuario_id) : (cajeroParam || 0);
 
+    const tipoPedido = String(req.query.tipo_pedido || "todos").trim().toLowerCase();
+    const filtrarTipo = tipoPedido === "local" || tipoPedido === "domicilio";
+
     const resultado = await query(
       `SELECT
          dp.producto_id,
@@ -120,10 +141,11 @@ export async function obtenerProductosMasVendidos(req, res) {
          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
              BETWEEN $1::date AND $2::date
          AND ($4::boolean = FALSE OR v.cajero_id = $5::bigint)
+         AND ($6::boolean = FALSE OR p.tipo_pedido = $7::varchar)
        GROUP BY dp.producto_id, dp.nombre_producto, c.nombre
        ORDER BY cantidad_vendida DESC, total_recaudado DESC
        LIMIT $3`,
-      [rango.desde, rango.hasta, limite, filtrarCajero, cajeroId]
+      [rango.desde, rango.hasta, limite, filtrarCajero, cajeroId, filtrarTipo, tipoPedido]
     );
 
     res.json(resultado.rows);
@@ -147,6 +169,9 @@ export async function obtenerPedidosCajero(req, res) {
     const cajeroId = esAdmin && cajeroParam ? cajeroParam : (!esAdmin ? Number(req.user.usuario_id) : null);
     const filtrarCajero = cajeroId !== null;
 
+    const tipoPedido = String(req.query.tipo_pedido || "todos").trim().toLowerCase();
+    const filtrarTipo = tipoPedido === "local" || tipoPedido === "domicilio";
+
     const resultado = await query(
       `SELECT
          v.venta_id,
@@ -156,6 +181,12 @@ export async function obtenerPedidosCajero(req, res) {
          p.pedido_id,
          p.numero_pedido,
          p.numero_dia,
+         p.tipo_pedido,
+         p.direccion_domicilio,
+         p.barrio_domicilio,
+         p.telefono_domicilio,
+         p.nombre_cliente_domicilio,
+         p.costo_domicilio,
          p.estado_entrega,
          c.comprobante_id,
          c.numero_comprobante,
@@ -209,10 +240,11 @@ export async function obtenerPedidosCajero(req, res) {
        LEFT JOIN metodos_pago mp ON mp.metodo_pago_id = pa.metodo_pago_id
        WHERE v.estado = 'vigente'
          AND ($3::boolean = FALSE OR v.cajero_id = $4::bigint)
+         AND ($5::boolean = FALSE OR p.tipo_pedido = $6::varchar)
          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
              BETWEEN $1::date AND $2::date
        ORDER BY v.fecha_venta DESC`,
-      [rango.desde, rango.hasta, filtrarCajero, cajeroId || 0]
+      [rango.desde, rango.hasta, filtrarCajero, cajeroId || 0, filtrarTipo, tipoPedido]
     );
 
     res.json(resultado.rows);

@@ -93,6 +93,12 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
                 {comprobante.numero_dia ? `Pedido N° ${comprobante.numero_dia}` : comprobante.numero_pedido}
               </p>
 
+              <div className="comprobante-tipo-etiqueta">
+                <span className={comprobante.tipo_pedido === "domicilio" ? "comprobante-tag-domicilio" : "comprobante-tag-local"}>
+                  {comprobante.tipo_pedido === "domicilio" ? "🛵 DOMICILIO" : "🏪 EN LOCAL"}
+                </span>
+              </div>
+
               <div className="comprobante-datos">
                 <div className="comprobante-fila">
                   <span>Fecha / hora</span>
@@ -102,6 +108,26 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
                   <span>Cajero</span>
                   <strong>{comprobante.cajero || "Caja principal"}</strong>
                 </div>
+                {comprobante.tipo_pedido === "domicilio" && (
+                  <>
+                    <div className="comprobante-fila">
+                      <span>A nombre de</span>
+                      <strong>{comprobante.nombre_cliente_domicilio}</strong>
+                    </div>
+                    <div className="comprobante-fila">
+                      <span>Teléfono</span>
+                      <strong>{comprobante.telefono_domicilio}</strong>
+                    </div>
+                    <div className="comprobante-fila">
+                      <span>Dirección</span>
+                      <strong>{comprobante.direccion_domicilio}</strong>
+                    </div>
+                    <div className="comprobante-fila">
+                      <span>Barrio</span>
+                      <strong>{comprobante.barrio_domicilio}</strong>
+                    </div>
+                  </>
+                )}
                 <div className="comprobante-fila">
                   <span>Comprobante</span>
                   <strong>{comprobante.numero_comprobante}</strong>
@@ -135,6 +161,12 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
                 ))}
               </div>
 
+              {comprobante.tipo_pedido === "domicilio" && Number(comprobante.costo_domicilio) > 0 && (
+                <div className="comprobante-fila comprobante-fila-domicilio">
+                  <span>Costo de domicilio</span>
+                  <strong>{pesos(comprobante.costo_domicilio)}</strong>
+                </div>
+              )}
               <div className="comprobante-total">
                 <span>TOTAL COBRADO</span>
                 <strong>{pesos(comprobante.total)}</strong>

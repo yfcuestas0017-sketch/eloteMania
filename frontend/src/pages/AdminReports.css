@@ -337,3 +337,167 @@
     min-height: 44px;
   }
 }
+
+/* El selector de canal de venta (.selector-tipo-reporte) está definido centralmente en index.css */
+
+/* ---------- Comparativa de Canales (Local vs Domicilio) ---------- */
+
+.comparativa-canales-tarjeta {
+  border-left: 4px solid #ea580c;
+}
+
+.comparativa-canales-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.canal-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1.5px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--papel);
+  cursor: pointer;
+  transition: all 160ms var(--ease-salida);
+}
+
+.canal-tarjeta:hover {
+  transform: translateY(-2px);
+  border-color: var(--rojo-borde);
+  box-shadow: 0 4px 14px rgba(41, 34, 31, 0.08);
+}
+
+.canal-tarjeta.activa {
+  background: #fff;
+  border-color: var(--rojo);
+  box-shadow: 0 0 0 2px var(--rojo-suave);
+}
+
+.canal-tarjeta-cab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.canal-icono {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radio-s);
+  flex-shrink: 0;
+}
+
+.canal-icono.local {
+  background: var(--verde-suave);
+  color: var(--verde);
+}
+
+.canal-icono.domicilio {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.canal-tarjeta-cab strong {
+  display: block;
+  font-size: 14px;
+  color: var(--tinta);
+}
+
+.canal-tarjeta-cab small {
+  color: var(--apagado);
+  font-size: 12px;
+}
+
+.canal-tarjeta-monto {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.canal-tarjeta-monto strong {
+  font-family: var(--fuente-titulo);
+  font-size: 22px;
+  color: var(--tinta);
+}
+
+.canal-tarjeta-monto span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--apagado);
+}
+
+.canal-barra-progreso {
+  width: 100%;
+  height: 7px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.canal-barra-relleno {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 300ms ease;
+}
+
+.canal-barra-relleno.local {
+  background: var(--verde);
+}
+
+.canal-barra-relleno.domicilio {
+  background: #ea580c;
+}
+
+.canal-sub-envio {
+  font-size: 11px;
+  color: #c2410c;
+  background: #fff7ed;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px dashed #fed7aa;
+}
+
+/* Ajustes responsivos para Comparativa de Canales y Cajeros */
+
+@media (max-width: 680px) {
+  .comparativa-canales-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .canal-tarjeta {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .canal-tarjeta-monto strong {
+    font-size: 20px;
+  }
+
+  .cajero-item-clickeable {
+    padding: 12px;
+  }
+
+  .barra-titulo strong {
+    font-size: 13px;
+  }
+
+  .selector-pildoras {
+    display: flex;
+    width: 100%;
+  }
+
+  .selector-pildoras button {
+    flex: 1;
+    min-height: 38px;
+    font-size: 12px;
+    text-align: center;
+    justify-content: center;
+  }
+}
