@@ -191,6 +191,8 @@ export async function obtenerPedidosCajero(req, res) {
          c.comprobante_id,
          c.numero_comprobante,
          c.cantidad_impresiones,
+         c.cantidad_ediciones,
+         c.ultima_edicion,
          c.fecha_emision,
          COALESCE(mp.nombre, 'Efectivo') AS metodo_pago,
          COALESCE(TRIM(u.nombres || ' ' || COALESCE(u.apellidos, '')), 'Usuario eliminado') AS cajero,

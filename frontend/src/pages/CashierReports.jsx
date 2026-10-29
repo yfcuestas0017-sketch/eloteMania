@@ -5,15 +5,19 @@ import {
   ChefHat,
   CreditCard,
   FileText,
+  Pencil,
   Printer,
   RefreshCw,
   Search,
   ShoppingBag,
-  Store
+  Store,
+  Trash2
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import ComprobanteModal from "../components/ComprobanteModal";
-import { etiquetaPedido, fechaLocal, pesos } from "../lib/formato";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { etiquetaPedido, fechaLocal, leerUsuario, pesos } from "../lib/formato";
 import { apiFetch } from "../services/api";
 import "./admin.css";
 import "./CashierReports.css";
@@ -31,6 +35,9 @@ function formatoFecha(fecha) {
 
 export default function CashierReports() {
   const hoy = fechaLocal();
+  const navigate = useNavigate();
+  const usuario = leerUsuario();
+  const esAdmin = Array.isArray(usuario.roles) && usuario.roles.includes("ADMIN");
 
   const [desde, setDesde] = useState(hoy);
   const [hasta, setHasta] = useState(hoy);
@@ -40,6 +47,10 @@ export default function CashierReports() {
   const [error, setError] = useState("");
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState(null);
   const [tipoFiltro, setTipoFiltro] = useState("todos"); // "todos" | "local" | "domicilio"
+  const [pedidoAEliminar, setPedidoAEliminar] = useState(null);
+  const [motivoEliminar, setMotivoEliminar] = useState("");
+  const [eliminando, setEliminando] = useState(false);
+  const [exito, setExito] = useState("");
 
   async function consultar(e) {
     if (e) e.preventDefault();
@@ -144,6 +155,52 @@ export default function CashierReports() {
     return { cantidad: list.length, total, costoEnvios };
   }, [pedidos]);
 
+  // El cajero solo puede modificar pedidos de hoy; el administrador, cualquiera.
+  // (El servidor vuelve a validarlo: esto solo evita mostrar botones inútiles.)
+  function puedeModificar(pedido) {
+    return esAdmin || fechaLocal(new Date(pedido.fecha_venta)) === hoy;
+  }
+
+  function editarPedido(pedido) {
+    navigate(`/caja/ventas?editar=${pedido.pedido_id}`);
+  }
+
+  function pedirEliminacion(pedido) {
+    setMotivoEliminar("");
+    setPedidoAEliminar(pedido);
+  }
+
+  function cancelarEliminacion() {
+    if (eliminando) return;
+    setPedidoAEliminar(null);
+    setMotivoEliminar("");
+  }
+
+  async function confirmarEliminacion() {
+    if (!pedidoAEliminar) return;
+
+    setEliminando(true);
+    setError("");
+    setExito("");
+
+    try {
+      const respuesta = await apiFetch(`/orders/${pedidoAEliminar.pedido_id}`, {
+        method: "DELETE",
+        body: JSON.stringify({ motivo: motivoEliminar.trim() })
+      });
+
+      const idEliminado = pedidoAEliminar.pedido_id;
+      setPedidos((prev) => prev.filter((p) => p.pedido_id !== idEliminado));
+      setExito(respuesta.mensaje || "Pedido eliminado.");
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar el pedido.");
+    } finally {
+      setEliminando(false);
+      setPedidoAEliminar(null);
+      setMotivoEliminar("");
+    }
+  }
+
   function actualizarContadorImpresion(comprobanteId, nuevoConteo) {
     setPedidos((prev) =>
       prev.map((p) =>
@@ -161,12 +218,14 @@ export default function CashierReports() {
           <div>
             <h1 className="pagina-titulo">Mis pedidos completados</h1>
             <p className="pagina-sub">
-              Historial de pedidos cobrados por ti con opción de reimprimir voucher.
+              Historial de pedidos cobrados por ti. Puedes reimprimir el voucher, editar
+              el pedido o eliminarlo.
             </p>
           </div>
         </header>
 
         {error && <p className="aviso aviso-error" role="alert">{error}</p>}
+        {exito && <p className="aviso aviso-exito" role="status">{exito}</p>}
 
         {/* Filtros de fecha y búsqueda */}
         <section className="tarjeta no-imprimir">
@@ -346,6 +405,11 @@ export default function CashierReports() {
                               Local
                             </span>
                           )}
+                          {Number(pedido.cantidad_ediciones) > 0 && (
+                            <span className="chip chip-gris" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                              ✏️ Modificado
+                            </span>
+                          )}
                         </div>
                         <small className="caja-comprobante-tag">
                           {pedido.numero_comprobante}
@@ -395,15 +459,40 @@ export default function CashierReports() {
                       <span className="chip chip-verde">Completado</span>
                     </td>
                     <td className="num celda-acciones">
-                      <button
-                        type="button"
-                        className="btn btn-secundario btn-sm btn-voucher"
-                        onClick={() => setComprobanteSeleccionado(pedido)}
-                        title="Imprimir voucher de nuevo"
-                      >
-                        <Printer size={15} aria-hidden="true" />
-                        <span>Imprimir voucher</span>
-                      </button>
+                      <div className="caja-acciones">
+                        <button
+                          type="button"
+                          className="btn btn-secundario btn-sm btn-voucher"
+                          onClick={() => setComprobanteSeleccionado(pedido)}
+                          title="Imprimir voucher de nuevo"
+                        >
+                          <Printer size={15} aria-hidden="true" />
+                          <span>Imprimir voucher</span>
+                        </button>
+
+                        {puedeModificar(pedido) && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-secundario btn-sm btn-voucher"
+                              onClick={() => editarPedido(pedido)}
+                              title="Agregar o quitar productos y generar el voucher de nuevo"
+                            >
+                              <Pencil size={15} aria-hidden="true" />
+                              <span>Editar</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secundario btn-sm btn-voucher btn-eliminar-pedido"
+                              onClick={() => pedirEliminacion(pedido)}
+                              title="Eliminar este pedido de los reportes"
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                              <span>Eliminar</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -425,10 +514,44 @@ export default function CashierReports() {
             <span>
               Mostrando {pedidosFiltrados.length} de {pedidos.length} pedidos
             </span>
-            <span>Usa "Imprimir voucher" para reimprimir el comprobante térmico</span>
+            <span>
+              {esAdmin
+                ? "Como administrador puedes editar o eliminar pedidos de cualquier día"
+                : "Puedes editar o eliminar los pedidos de hoy"}
+            </span>
           </div>
         </section>
       </div>
+
+      <ConfirmDialog
+        abierto={Boolean(pedidoAEliminar)}
+        titulo={pedidoAEliminar ? `¿Eliminar el pedido ${etiquetaPedido(pedidoAEliminar)}?` : ""}
+        texto={
+          pedidoAEliminar
+            ? `Se quitará de los reportes (${pesos(pedidoAEliminar.total)}) y los productos con control de inventario volverán al stock. Esta acción no se puede deshacer.`
+            : ""
+        }
+        confirmar="Sí, eliminar"
+        cancelar="No, conservar"
+        peligro
+        cargando={eliminando}
+        onConfirmar={confirmarEliminacion}
+        onCancelar={cancelarEliminacion}
+      >
+        <div className="campo">
+          <label htmlFor="motivo-eliminar">Motivo (opcional)</label>
+          <input
+            id="motivo-eliminar"
+            className="entrada"
+            type="text"
+            maxLength={250}
+            placeholder="Ej. El cliente canceló el pedido"
+            value={motivoEliminar}
+            onChange={(e) => setMotivoEliminar(e.target.value)}
+            disabled={eliminando}
+          />
+        </div>
+      </ConfirmDialog>
 
       {/* Modal de visualización e impresión de voucher */}
       {comprobanteSeleccionado && (

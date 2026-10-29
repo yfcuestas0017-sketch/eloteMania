@@ -1102,3 +1102,49 @@
     min-height: 38px;
   }
 }
+
+/* ---------- Modo edición de un pedido ya cobrado ---------- */
+
+.pos-edicion-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #f0d9a8;
+  border-radius: var(--radio-s);
+  background: #fff7e3;
+  color: var(--tinta);
+}
+
+.pos-edicion-banner > svg {
+  flex: none;
+  color: #a86a00;
+}
+
+.pos-edicion-banner > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.pos-edicion-banner > div span {
+  color: var(--apagado);
+}
+
+.pos-edicion-banner .btn {
+  flex: none;
+}
+
+@media (max-width: 720px) {
+  .pos-edicion-banner {
+    flex-wrap: wrap;
+  }
+
+  .pos-edicion-banner .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}

@@ -9,6 +9,7 @@ export default function ConfirmDialog({
   cancelar = "Cancelar",
   peligro = false,
   cargando = false,
+  children,
   onConfirmar,
   onCancelar
 }) {
@@ -37,6 +38,7 @@ export default function ConfirmDialog({
       <div className="dialogo-cuerpo">
         <h2>{titulo}</h2>
         {texto && <p>{texto}</p>}
+        {children}
 
         <div className="dialogo-acciones">
           <button

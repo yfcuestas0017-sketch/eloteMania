@@ -1,14 +1,14 @@
 import pool, { query } from "../config/db.js";
 
-function obtenerIdUsuario(req) {
+export function obtenerIdUsuario(req) {
   return Number(req.user?.usuario_id);
 }
 
-function aCentavos(valor) {
+export function aCentavos(valor) {
   return Math.round(Number(valor) * 100);
 }
 
-function validarProductos(productos, adicionalesIndependientes) {
+export function validarProductos(productos, adicionalesIndependientes) {
   if (!Array.isArray(productos) || !Array.isArray(adicionalesIndependientes)) {
     return "El detalle del pedido no es válido.";
   }
@@ -61,7 +61,7 @@ function validarProductos(productos, adicionalesIndependientes) {
 
 // Las funciones SQL (confirmar_venta, entregar_pedido) lanzan RAISE EXCEPTION
 // con mensajes pensados para el usuario; llegan como código P0001.
-function esErrorDeNegocio(error) {
+export function esErrorDeNegocio(error) {
   return error?.code === "P0001";
 }
 
@@ -318,10 +318,27 @@ export async function checkout(req, res) {
          'P-' || TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISS')
               || '-' || SUBSTR(MD5(RANDOM()::TEXT), 1, 4),
          (
-           SELECT COALESCE(MAX(numero_dia), 0) + 1
-           FROM pedidos
-           WHERE (fecha_pedido AT TIME ZONE 'America/Bogota')::date
-               = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+           SELECT candidatos.numero
+           FROM generate_series(
+             1,
+             (
+               SELECT COUNT(*) + 1
+               FROM pedidos
+               WHERE (fecha_pedido AT TIME ZONE 'America/Bogota')::date
+                   = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+                 AND estado <> 'cancelado'
+             )
+           ) AS candidatos(numero)
+           WHERE NOT EXISTS (
+             SELECT 1
+             FROM pedidos existentes
+             WHERE (existentes.fecha_pedido AT TIME ZONE 'America/Bogota')::date
+                     = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+               AND existentes.numero_dia = candidatos.numero
+               AND existentes.estado <> 'cancelado'
+           )
+           ORDER BY candidatos.numero
+           LIMIT 1
          ),
          $1,
          $2,

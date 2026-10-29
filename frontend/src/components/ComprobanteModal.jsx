@@ -82,6 +82,11 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
                 <h2>ELOTE MANÍA</h2>
                 <p>WhatsApp {NEGOCIO.whatsapp}</p>
                 <small>Comprobante de pedido · COP</small>
+                {comprobante.cantidad_ediciones > 0 && (
+                  <span className="comprobante-reimpresion-tag">
+                    ** PEDIDO MODIFICADO (versión #{Number(comprobante.cantidad_ediciones) + 1}) **
+                  </span>
+                )}
                 {comprobante.cantidad_impresiones > 0 && (
                   <span className="comprobante-reimpresion-tag">
                     ** REIMPRESIÓN (Copia #{comprobante.cantidad_impresiones}) **
@@ -104,6 +109,12 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
                   <span>Fecha / hora</span>
                   <strong>{formatoFecha(comprobante.fecha_emision || comprobante.fecha_venta)}</strong>
                 </div>
+                {comprobante.cantidad_ediciones > 0 && comprobante.ultima_edicion && (
+                  <div className="comprobante-fila">
+                    <span>Modificado</span>
+                    <strong>{formatoFecha(comprobante.ultima_edicion)}</strong>
+                  </div>
+                )}
                 <div className="comprobante-fila">
                   <span>Cajero</span>
                   <strong>{comprobante.cajero || "Caja principal"}</strong>

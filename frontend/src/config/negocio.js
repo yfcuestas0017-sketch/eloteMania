@@ -3,8 +3,8 @@
 export const NEGOCIO = {
   nombre: "Elote Manía",
   eslogan: "Antojos mexicanos, a tu manera.",
-  whatsapp: "3160415870",
-  whatsappLink: "https://wa.me/573160415870",
+  whatsapp: "3175221920",
+  whatsappLink: "https://wa.me/573175221920",
   // Horario en formato 24 h (hora local del navegador).
   apertura: 14,
   cierre: 22,

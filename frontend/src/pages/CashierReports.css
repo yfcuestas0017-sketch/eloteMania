@@ -60,3 +60,32 @@
     font-size: 14px;
   }
 }
+
+.caja-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.aviso-exito {
+  background: #eaf6ee;
+  border: 1px solid #bfe3cb;
+  color: #17603a;
+}
+
+.btn-eliminar-pedido {
+  color: var(--rojo);
+}
+
+.btn-eliminar-pedido:hover {
+  background: var(--rojo-suave);
+  border-color: var(--rojo);
+  color: var(--rojo-oscuro);
+}
+
+@media (max-width: 720px) {
+  .caja-acciones {
+    flex-direction: column;
+  }
+}

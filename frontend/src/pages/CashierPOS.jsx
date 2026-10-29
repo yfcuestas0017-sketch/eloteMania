@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowLeft,
   Banknote,
   Bike,
   Check,
   CreditCard,
   Minus,
+  Pencil,
   Plus,
   Printer,
   Search,
   Store,
   Trash2
 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import { apiFetch, formatearUrlImagen } from "../services/api";
 import { etiquetaPedido, leerUsuario, nombreVisible, pesos } from "../lib/formato";
@@ -34,6 +37,9 @@ const esEfectivo = (nombre = "") => /efectivo/i.test(nombre);
 
 export default function CashierPOS() {
   const usuario = leerUsuario();
+  const navigate = useNavigate();
+  const [parametros] = useSearchParams();
+  const editarId = parametros.get("editar");
 
   const [productos, setProductos] = useState([]);
   const [adicionales, setAdicionales] = useState([]);
@@ -54,6 +60,15 @@ export default function CashierPOS() {
   const [direccion, setDireccion] = useState("");
   const [barrio, setBarrio] = useState("");
   const [costoDomicilio, setCostoDomicilio] = useState("");
+
+  // Modo edición: se llega desde Reportes con /caja/ventas?editar=<pedido_id>.
+  const [pedidoEdicion, setPedidoEdicion] = useState(null);
+  const [cargandoEdicion, setCargandoEdicion] = useState(Boolean(editarId));
+  const [errorEdicion, setErrorEdicion] = useState("");
+  // Unidades que este mismo pedido ya tiene descontadas del inventario,
+  // y precios con los que se cobraron originalmente.
+  const [cantidadesOriginales, setCantidadesOriginales] = useState({});
+  const [preciosOriginales, setPreciosOriginales] = useState({ productos: {}, adicionales: {} });
 
   useEffect(() => {
     async function cargarDatos() {
@@ -89,6 +104,87 @@ export default function CashierPOS() {
     cargarDatos();
   }, []);
 
+  useEffect(() => {
+    if (!editarId || cargando) return;
+
+    let cancelado = false;
+
+    async function cargarPedido() {
+      setCargandoEdicion(true);
+      setErrorEdicion("");
+
+      try {
+        const datos = await apiFetch(`/orders/${encodeURIComponent(editarId)}/edicion`);
+        if (cancelado) return;
+
+        const pedido = datos.pedido;
+        const catalogo = new Map(productos.map((p) => [Number(p.producto_id), p]));
+
+        const lineasProductos = datos.productos.map((linea, indice) => ({
+          ...(catalogo.get(linea.producto_id) || {}),
+          tipo_item: "producto",
+          producto_id: linea.producto_id,
+          nombre: linea.nombre,
+          precio: linea.precio,
+          imagen_url: catalogo.get(linea.producto_id)?.imagen_url ?? linea.imagen_url,
+          linea_id: `edicion-p-${linea.producto_id}-${indice}`,
+          cantidad: linea.cantidad,
+          observaciones: linea.observaciones || ""
+        }));
+
+        const lineasAdicionales = datos.adicionales.map((linea) => ({
+          tipo_item: "adicional",
+          adicional_id: linea.adicional_id,
+          nombre: linea.nombre,
+          precio: linea.precio,
+          linea_id: `edicion-a-${linea.adicional_id}`,
+          cantidad: linea.cantidad,
+          observaciones: ""
+        }));
+
+        const cantidades = {};
+        const preciosProductos = {};
+        for (const linea of datos.productos) {
+          cantidades[linea.producto_id] = (cantidades[linea.producto_id] || 0) + linea.cantidad;
+          if (!(linea.producto_id in preciosProductos)) {
+            preciosProductos[linea.producto_id] = linea.precio;
+          }
+        }
+        const preciosAdicionales = {};
+        for (const linea of datos.adicionales) {
+          if (!(linea.adicional_id in preciosAdicionales)) {
+            preciosAdicionales[linea.adicional_id] = linea.precio;
+          }
+        }
+
+        setCantidadesOriginales(cantidades);
+        setPreciosOriginales({ productos: preciosProductos, adicionales: preciosAdicionales });
+        setCarrito([...lineasProductos, ...lineasAdicionales]);
+        setTipoPedido(pedido.tipo_pedido || "local");
+        setNombreCliente(pedido.nombre_cliente_domicilio || "");
+        setTelefono(pedido.telefono_domicilio || "");
+        setDireccion(pedido.direccion_domicilio || "");
+        setBarrio(pedido.barrio_domicilio || "");
+        setCostoDomicilio(pedido.costo_domicilio ? String(pedido.costo_domicilio) : "");
+        setMetodoPago(pedido.metodo_pago_id ? String(pedido.metodo_pago_id) : "");
+        setEfectivo("");
+        setPedidoEdicion(pedido);
+      } catch (err) {
+        if (!cancelado) setErrorEdicion(err.message || "No se pudo cargar el pedido.");
+      } finally {
+        if (!cancelado) setCargandoEdicion(false);
+      }
+    }
+
+    cargarPedido();
+
+    return () => {
+      cancelado = true;
+    };
+    // El catálogo ya está cargado cuando `cargando` pasa a false.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editarId, cargando]);
+
   const productosFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
 
@@ -121,9 +217,11 @@ export default function CashierPOS() {
   }
 
   function stockDisponible(producto) {
-    return producto.controla_inventario
-      ? Math.max(0, Math.floor(Number(producto.stock_actual) || 0))
-      : Infinity;
+    if (!producto.controla_inventario) return Infinity;
+
+    // Al editar, el stock del catálogo ya descuenta las unidades de este pedido.
+    const propias = cantidadesOriginales[producto.producto_id] || 0;
+    return Math.max(0, Math.floor(Number(producto.stock_actual) || 0) + propias);
   }
 
   function agregarAlCarrito(producto) {
@@ -156,6 +254,7 @@ export default function CashierPOS() {
         {
           ...producto,
           tipo_item: "producto",
+          precio: preciosOriginales.productos[producto.producto_id] ?? producto.precio,
           linea_id: `${producto.producto_id}-${Date.now()}-${Math.random()
             .toString(36)
             .slice(2, 7)}`,
@@ -194,7 +293,7 @@ export default function CashierPOS() {
           tipo_item: "adicional",
           adicional_id: adicional.adicional_id,
           nombre: adicional.nombre,
-          precio: adicional.precio,
+          precio: preciosOriginales.adicionales[adicional.adicional_id] ?? adicional.precio,
           linea_id: `adicional-${adicional.adicional_id}-${Date.now()}`,
           cantidad: 1,
           observaciones: ""
@@ -252,6 +351,29 @@ export default function CashierPOS() {
     setDireccion("");
     setBarrio("");
     setCostoDomicilio("");
+  }
+
+  function reiniciarEdicion() {
+    setPedidoEdicion(null);
+    setCantidadesOriginales({});
+    setPreciosOriginales({ productos: {}, adicionales: {} });
+    setErrorEdicion("");
+    setCargandoEdicion(false);
+  }
+
+  function cancelarEdicion() {
+    reiniciarEdicion();
+    vaciarPedido();
+    navigate("/caja/reportes");
+  }
+
+  function nuevoPedido() {
+    setComprobante(null);
+
+    if (editarId || pedidoEdicion) {
+      reiniciarEdicion();
+      navigate("/caja/ventas", { replace: true });
+    }
   }
 
   const subtotalProductos = carrito.reduce(
@@ -345,8 +467,14 @@ export default function CashierPOS() {
 
       const nombreMetodoPago = nombreMetodo || "No especificado";
 
-      const resultado = await apiFetch("/orders/checkout", {
-        method: "POST",
+      // Pedido nuevo: POST /orders/checkout. Pedido en edición: PUT /orders/:id
+      // (conserva el número de pedido y de comprobante).
+      const rutaGuardado = pedidoEdicion
+        ? `/orders/${pedidoEdicion.pedido_id}`
+        : "/orders/checkout";
+
+      const resultado = await apiFetch(rutaGuardado, {
+        method: pedidoEdicion ? "PUT" : "POST",
         body: JSON.stringify({
           metodo_pago_id: Number(metodoPago),
           tipo_pedido: tipoPedido,
@@ -383,18 +511,20 @@ export default function CashierPOS() {
           (cantidadesVendidas.get(id) || 0) + Number(item.cantidad)
         );
       }
+      // Stock local = stock - (unidades ahora - unidades que el pedido ya tenía).
+      // En una venta nueva las "unidades que ya tenía" son 0.
       setProductos((actuales) =>
-        actuales.map((producto) =>
-          producto.controla_inventario &&
-          cantidadesVendidas.has(Number(producto.producto_id))
-            ? {
-                ...producto,
-                stock_actual:
-                  Number(producto.stock_actual) -
-                  cantidadesVendidas.get(Number(producto.producto_id))
-              }
-            : producto
-        )
+        actuales.map((producto) => {
+          if (!producto.controla_inventario) return producto;
+
+          const id = Number(producto.producto_id);
+          const diferencia =
+            (cantidadesVendidas.get(id) || 0) - (cantidadesOriginales[id] || 0);
+
+          return diferencia === 0
+            ? producto
+            : { ...producto, stock_actual: Number(producto.stock_actual) - diferencia };
+        })
       );
 
       setComprobante({
@@ -418,7 +548,9 @@ export default function CashierPOS() {
           esEfectivo(nombreMetodoPago) && recibido > 0
             ? recibido - Number(totalCobrado)
             : null,
-        productos: productosVendidos,
+        productos: datosComprobante.productos?.length
+          ? datosComprobante.productos
+          : productosVendidos,
         tipo_pedido: tipoPedido,
         direccion_domicilio: tipoPedido === "domicilio" ? direccion.trim() : null,
         barrio_domicilio: tipoPedido === "domicilio" ? barrio.trim() : null,
@@ -451,10 +583,14 @@ export default function CashierPOS() {
         <div className="pagina caja-pagina">
           <header className="pagina-cabecera no-imprimir">
             <div>
-              <h1 className="pagina-titulo">¡Pedido cobrado!</h1>
+              <h1 className="pagina-titulo">
+                {comprobante.cantidad_ediciones > 0 ? "¡Pedido modificado!" : "¡Pedido cobrado!"}
+              </h1>
               <p className="pagina-sub">
-                Pedido {etiquetaPedido(comprobante)} · Cobro registrado el{" "}
-                {formatoFecha(comprobante.fecha_emision)}
+                Pedido {etiquetaPedido(comprobante)} ·{" "}
+                {comprobante.cantidad_ediciones > 0
+                  ? `Modificado el ${formatoFecha(comprobante.ultima_edicion)}`
+                  : `Cobro registrado el ${formatoFecha(comprobante.fecha_emision)}`}
               </p>
             </div>
           </header>
@@ -465,7 +601,17 @@ export default function CashierPOS() {
                 <span className="exito-icono">
                   <Check size={22} aria-hidden="true" />
                 </span>
-                <h2>Pedido completado.</h2>
+                <h2>
+                  {comprobante.cantidad_ediciones > 0
+                    ? "Pedido actualizado."
+                    : "Pedido completado."}
+                </h2>
+                {comprobante.cantidad_ediciones > 0 && (
+                  <p className="exito-detalle">
+                    Mantiene su número de pedido y de comprobante. Imprime el voucher nuevo y
+                    retira el anterior al cliente.
+                  </p>
+                )}
                 {comprobante.efectivo_recibido ? (
                   <p className="exito-detalle">
                     Recibiste {pesos(comprobante.efectivo_recibido)}. Entrega{" "}
@@ -495,11 +641,24 @@ export default function CashierPOS() {
                 <button
                   type="button"
                   className="btn btn-secundario"
-                  onClick={() => setComprobante(null)}
+                  onClick={nuevoPedido}
                 >
                   <Plus size={16} aria-hidden="true" />
                   Nuevo pedido
                 </button>
+                {comprobante.cantidad_ediciones > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-secundario"
+                    onClick={() => {
+                      reiniciarEdicion();
+                      navigate("/caja/reportes");
+                    }}
+                  >
+                    <ArrowLeft size={16} aria-hidden="true" />
+                    Volver a reportes
+                  </button>
+                )}
               </div>
               <p className="campo-ayuda">
                 Impresión térmica · 80 mm · Puedes reimprimir sin duplicar la venta.
@@ -519,6 +678,11 @@ export default function CashierPOS() {
                     <h2>ELOTE MANÍA</h2>
                     <p>WhatsApp {NEGOCIO.whatsapp}</p>
                     <small>Comprobante de pedido · COP</small>
+                    {comprobante.cantidad_ediciones > 0 && (
+                      <span className="comprobante-reimpresion-tag">
+                        ** PEDIDO MODIFICADO (versión #{Number(comprobante.cantidad_ediciones) + 1}) **
+                      </span>
+                    )}
                   </header>
 
                   <p className="comprobante-numero">
@@ -534,6 +698,12 @@ export default function CashierPOS() {
                       <span>Fecha / hora</span>
                       <strong>{formatoFecha(comprobante.fecha_emision)}</strong>
                     </div>
+                    {comprobante.cantidad_ediciones > 0 && comprobante.ultima_edicion && (
+                      <div className="comprobante-fila">
+                        <span>Modificado</span>
+                        <strong>{formatoFecha(comprobante.ultima_edicion)}</strong>
+                      </div>
+                    )}
                     <div className="comprobante-fila">
                       <span>Cajero</span>
                       <strong>{comprobante.cajero}</strong>
@@ -631,20 +801,88 @@ export default function CashierPOS() {
     );
   }
 
+  /* ---------------- Edición: cargando / no disponible ---------------- */
+
+  if (editarId && errorEdicion) {
+    return (
+      <AppShell area="caja" seccion="Editar pedido">
+        <div className="pagina caja-pagina">
+          <header className="pagina-cabecera">
+            <div>
+              <h1 className="pagina-titulo">No se puede editar este pedido</h1>
+            </div>
+          </header>
+
+          <p className="aviso aviso-error" role="alert">{errorEdicion}</p>
+
+          <div>
+            <button
+              type="button"
+              className="btn btn-secundario"
+              onClick={() => {
+                reiniciarEdicion();
+                navigate("/caja/reportes");
+              }}
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+              Volver a reportes
+            </button>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (editarId && !pedidoEdicion && (cargando || cargandoEdicion)) {
+    return (
+      <AppShell area="caja" seccion="Editar pedido">
+        <div className="pagina caja-pagina">
+          <p className="vacio" role="status">Cargando el pedido...</p>
+        </div>
+      </AppShell>
+    );
+  }
+
   /* ---------------- Punto de venta ---------------- */
 
   return (
-    <AppShell area="caja" seccion="Punto de venta">
+    <AppShell area="caja" seccion={pedidoEdicion ? "Editar pedido" : "Punto de venta"}>
       <div className="pagina caja-pagina">
         <header className="pagina-cabecera">
           <div>
-            <h1 className="pagina-titulo">Un antojo más, por favor.</h1>
+            <h1 className="pagina-titulo">
+              {pedidoEdicion
+                ? `Editar pedido ${etiquetaPedido(pedidoEdicion)}`
+                : "Un antojo más, por favor."}
+            </h1>
             <p className="pagina-sub">
               Punto de venta · {nombreVisible(usuario)}
             </p>
           </div>
 
         </header>
+
+        {pedidoEdicion && (
+          <div className="pos-edicion-banner no-imprimir" role="status">
+            <Pencil size={18} aria-hidden="true" />
+            <div>
+              <strong>Estás modificando un pedido ya cobrado</strong>
+              <span>
+                Conserva el número de pedido {etiquetaPedido(pedidoEdicion)} y el comprobante{" "}
+                {pedidoEdicion.numero_comprobante}. Agrega o quita productos y guarda para
+                generar el voucher nuevo.
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secundario btn-sm"
+              onClick={cancelarEdicion}
+              disabled={confirmando}
+            >
+              Cancelar edición
+            </button>
+          </div>
+        )}
 
         {error && <p className="aviso aviso-error" role="alert">{error}</p>}
 
@@ -1071,11 +1309,17 @@ export default function CashierPOS() {
               disabled={confirmando || cargando || carrito.length === 0}
             >
               <Check size={16} aria-hidden="true" />
-              {confirmando ? "Procesando..." : "Realizar pedido"}
+              {confirmando
+                ? "Procesando..."
+                : pedidoEdicion
+                  ? "Guardar cambios y generar voucher"
+                  : "Realizar pedido"}
             </button>
 
             <p className="campo-ayuda">
-              Al realizar el pedido se genera el comprobante y queda completado.
+              {pedidoEdicion
+                ? "Se actualiza el pedido, el pago y el inventario (solo la diferencia). El número de pedido no cambia."
+                : "Al realizar el pedido se genera el comprobante y queda completado."}
             </p>
           </form>
         </div>
