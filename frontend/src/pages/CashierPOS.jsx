@@ -690,7 +690,7 @@ export default function CashierPOS() {
                   </p>
                   <div className="comprobante-tipo-etiqueta">
                     <span className={comprobante.tipo_pedido === "domicilio" ? "comprobante-tag-domicilio" : "comprobante-tag-local"}>
-                      {comprobante.tipo_pedido === "domicilio" ? "🛵 DOMICILIO" : "🏪 EN LOCAL"}
+                      {comprobante.tipo_pedido === "domicilio" ? " DOMICILIO" : " EN LOCAL"}
                     </span>
                   </div>
                   <div className="comprobante-datos">
