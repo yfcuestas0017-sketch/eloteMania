@@ -67,7 +67,7 @@ export default function AdminInventory() {
 
   function iniciarAjuste(producto) {
     setSeleccionado(producto);
-    setStockNuevo(String(producto.stock_actual));
+    setStockNuevo(String(Number(producto.stock_actual)));
     setMotivo("");
     setError("");
     setExito("");
@@ -211,8 +211,8 @@ export default function AdminInventory() {
                         <small className="admin-inventario-codigo">{producto.codigo || "Sin código"}</small>
                       </td>
                       <td>{producto.categoria || "Sin categoría"}</td>
-                      <td>{controla ? `${producto.stock_actual} ${producto.unidad_medida}` : "Sin control"}</td>
-                      <td>{controla ? producto.stock_minimo : "—"}</td>
+                      <td>{controla ? `${Number(producto.stock_actual)} unidades` : "Sin control"}</td>
+                      <td>{controla ? Number(producto.stock_minimo) : "—"}</td>
                       <td>
                         <span className={`chip ${bajo ? "chip-ambar" : "chip-verde"}`}>
                           {!controla ? "No inventariable" : bajo ? "Reponer" : "Disponible"}
