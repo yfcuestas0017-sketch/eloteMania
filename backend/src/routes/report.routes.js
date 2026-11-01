@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   obtenerResumen,
+  obtenerResumenPorMetodoPago,
   obtenerVentasPorCajero,
   obtenerProductosMasVendidos,
   obtenerPedidosCajero
@@ -18,6 +19,12 @@ router.get(
   "/resumen",
   authorize("ADMIN", "CAJERO"),
   obtenerResumen
+);
+
+router.get(
+  "/metodos-pago",
+  authorize("ADMIN", "CAJERO"),
+  obtenerResumenPorMetodoPago
 );
 
 router.get(

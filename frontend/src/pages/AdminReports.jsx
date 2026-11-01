@@ -20,6 +20,7 @@ import ComprobanteModal from "../components/ComprobanteModal";
 import GraficaVentas from "../components/GraficaVentas";
 import HistorialDia from "../components/HistorialDia";
 import { etiquetaPedido, fechaLocal, pesos } from "../lib/formato";
+import ResumenMetodosPago from "../components/ResumenMetodosPago";
 import { apiFetch } from "../services/api";
 import "./admin.css";
 import "./CashierReports.css";
@@ -43,6 +44,7 @@ export default function AdminReports() {
   const [hasta, setHasta] = useState(hoy);
   const [cajeroSeleccionado, setCajeroSeleccionado] = useState(null); // null = todos
   const [resumen, setResumen] = useState(null);
+  const [metodosPago, setMetodosPago] = useState([]);
   const [cajeros, setCajeros] = useState([]);
   const [productosMasVendidos, setProductosMasVendidos] = useState([]);
   const [pedidosRecientes, setPedidosRecientes] = useState([]);
@@ -71,18 +73,20 @@ export default function AdminReports() {
     const filtroTipo = tipoFiltro !== "todos" ? `&tipo_pedido=${tipoFiltro}` : "";
 
     try {
-      const [datosResumen, datosCajeros, datosProductos, datosPedidos] =
+      const [datosResumen, datosCajeros, datosProductos, datosPedidos, datosMetodos] =
         await Promise.all([
           apiFetch(`/reports/resumen?${rangoBase}${filtroCajero}${filtroTipo}`),
           apiFetch(`/reports/ventas-por-cajero?${rangoBase}${filtroTipo}`),
           apiFetch(`/reports/productos-mas-vendidos?${rangoBase}${filtroCajero}&limite=10${filtroTipo}`),
-          apiFetch(`/reports/pedidos-cajero?${rangoBase}${filtroCajero}${filtroTipo}`)
+          apiFetch(`/reports/pedidos-cajero?${rangoBase}${filtroCajero}${filtroTipo}`),
+          apiFetch(`/reports/metodos-pago?${rangoBase}${filtroCajero}${filtroTipo}`)
         ]);
 
       setResumen(datosResumen);
       setCajeros(datosCajeros || []);
       setProductosMasVendidos(datosProductos || []);
       setPedidosRecientes(datosPedidos || []);
+      setMetodosPago(datosMetodos || []);
     } catch (err) {
       setError(err.message || "Error al consultar los reportes.");
     } finally {
@@ -398,6 +402,9 @@ export default function AdminReports() {
             </article>
           </section>
         )}
+
+        {/* Total recaudado por efectivo y por medios digitales */}
+        {resumen && <ResumenMetodosPago metodos={metodosPago} />}
 
         {/* Gráfica de ventas por día: clic en un punto = historial de ese día */}
         {/* Comparativa visual de canales: Local vs Domicilio */}

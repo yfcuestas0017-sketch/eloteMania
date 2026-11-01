@@ -257,3 +257,52 @@ export async function obtenerPedidosCajero(req, res) {
     });
   }
 }
+
+export async function obtenerResumenPorMetodoPago(req, res) {
+  const rango = obtenerRango(req, res);
+  if (!rango) return;
+
+  try {
+    const esAdmin = req.user.roles?.includes("ADMIN");
+    const cajeroParam = req.query.cajero_id ? Number(req.query.cajero_id) : null;
+    const filtrarCajero = !esAdmin || cajeroParam !== null;
+    const cajeroId = !esAdmin ? Number(req.user.usuario_id) : (cajeroParam || 0);
+
+    const tipoPedido = String(req.query.tipo_pedido || "todos").trim().toLowerCase();
+    const filtrarTipo = tipoPedido === "local" || tipoPedido === "domicilio";
+
+    // Se listan todos los métodos activos (aunque no tengan ventas, en 0) y
+    // también los inactivos que sí tuvieron ventas en el período.
+    const resultado = await query(
+      `SELECT
+         mp.metodo_pago_id,
+         mp.nombre,
+         COUNT(x.venta_id)::int AS cantidad_ventas,
+         COALESCE(SUM(x.valor), 0) AS total
+       FROM metodos_pago mp
+       LEFT JOIN (
+         SELECT pa.metodo_pago_id, pa.valor, v.venta_id
+         FROM pagos pa
+         JOIN pedidos p ON p.pedido_id = pa.pedido_id
+         JOIN ventas v ON v.pedido_id = p.pedido_id
+         WHERE pa.estado = 'confirmado'
+           AND v.estado = 'vigente'
+           AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
+               BETWEEN $1::date AND $2::date
+           AND ($3::boolean = FALSE OR v.cajero_id = $4::bigint)
+           AND ($5::boolean = FALSE OR p.tipo_pedido = $6::varchar)
+       ) x ON x.metodo_pago_id = mp.metodo_pago_id
+       WHERE mp.activo = TRUE OR x.venta_id IS NOT NULL
+       GROUP BY mp.metodo_pago_id, mp.nombre
+       ORDER BY mp.nombre`,
+      [rango.desde, rango.hasta, filtrarCajero, cajeroId, filtrarTipo, tipoPedido]
+    );
+
+    res.json(resultado.rows);
+  } catch (error) {
+    console.error("Error en obtenerResumenPorMetodoPago:", error);
+    res.status(500).json({
+      mensaje: "No se pudo generar el resumen por método de pago."
+    });
+  }
+}

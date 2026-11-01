@@ -1,0 +1,89 @@
+/* Totales por método de pago: efectivo vs. medios digitales */
+
+.pagos-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.pagos-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  background: var(--blanco);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+}
+
+.pagos-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagos-cabecera small {
+  color: var(--apagado);
+  font-size: 12px;
+}
+
+.pagos-titulo {
+  margin: 0;
+  font-family: var(--fuente-texto);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.pagos-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.pagos-efectivo .pagos-icono {
+  background: var(--verde-suave);
+  color: var(--verde);
+}
+
+.pagos-digital .pagos-icono {
+  background: var(--rojo-suave);
+  color: var(--rojo);
+}
+
+.pagos-total {
+  font-family: var(--fuente-titulo);
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.pagos-detalle {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px dashed var(--linea);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pagos-detalle li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.pagos-detalle li small {
+  color: var(--apagado);
+}
+
+.pagos-detalle li strong {
+  font-variant-numeric: tabular-nums;
+}

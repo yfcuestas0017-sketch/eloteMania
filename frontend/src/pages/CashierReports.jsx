@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import ComprobanteModal from "../components/ComprobanteModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import ResumenMetodosPago from "../components/ResumenMetodosPago";
 import { etiquetaPedido, fechaLocal, leerUsuario, pesos } from "../lib/formato";
 import { apiFetch } from "../services/api";
 import "./admin.css";
@@ -42,6 +43,7 @@ export default function CashierReports() {
   const [desde, setDesde] = useState(hoy);
   const [hasta, setHasta] = useState(hoy);
   const [pedidos, setPedidos] = useState([]);
+  const [metodosPago, setMetodosPago] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
@@ -66,8 +68,12 @@ export default function CashierReports() {
     try {
       const filtroTipo = tipoFiltro !== "todos" ? `&tipo_pedido=${tipoFiltro}` : "";
       const rango = `desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}${filtroTipo}`;
-      const datos = await apiFetch(`/reports/pedidos-cajero?${rango}`);
+      const [datos, datosMetodos] = await Promise.all([
+        apiFetch(`/reports/pedidos-cajero?${rango}`),
+        apiFetch(`/reports/metodos-pago?${rango}`)
+      ]);
       setPedidos(datos || []);
+      setMetodosPago(datosMetodos || []);
     } catch (err) {
       setError(err.message || "Error al consultar los pedidos.");
     } finally {
@@ -359,6 +365,9 @@ export default function CashierReports() {
             </article>
           )}
         </section>
+
+        {/* Total recaudado por efectivo y por medios digitales */}
+        <ResumenMetodosPago metodos={metodosPago} />
 
         {/* Listado de pedidos con reimpresión de voucher */}
         <section className="tarjeta no-imprimir">
