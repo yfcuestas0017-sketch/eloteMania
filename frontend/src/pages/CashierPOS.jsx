@@ -493,7 +493,7 @@ export default function CashierPOS() {
           direccion_domicilio: tipoPedido === "domicilio" ? direccion.trim() : null,
           barrio_domicilio: tipoPedido === "domicilio" ? barrio.trim() : null,
           telefono_domicilio: tipoPedido === "domicilio" ? telefono.trim() : null,
-          nombre_cliente_domicilio: tipoPedido === "domicilio" ? nombreCliente.trim() : null,
+          nombre_cliente_domicilio: nombreCliente.trim() || null,
           costo_domicilio: valorCostoDomicilio,
           productos: carrito
             .filter((producto) => producto.tipo_item === "producto")
@@ -567,7 +567,7 @@ export default function CashierPOS() {
         direccion_domicilio: tipoPedido === "domicilio" ? direccion.trim() : null,
         barrio_domicilio: tipoPedido === "domicilio" ? barrio.trim() : null,
         telefono_domicilio: tipoPedido === "domicilio" ? telefono.trim() : null,
-        nombre_cliente_domicilio: tipoPedido === "domicilio" ? nombreCliente.trim() : null,
+        nombre_cliente_domicilio: nombreCliente.trim() || null,
         costo_domicilio: valorCostoDomicilio
       });
 
@@ -720,12 +720,14 @@ export default function CashierPOS() {
                       <span>Cajero</span>
                       <strong>{comprobante.cajero}</strong>
                     </div>
+                    {comprobante.nombre_cliente_domicilio && (
+                      <div className="comprobante-fila">
+                        <span>{comprobante.tipo_pedido === "domicilio" ? "A nombre de" : "Cliente"}</span>
+                        <strong>{comprobante.nombre_cliente_domicilio}</strong>
+                      </div>
+                    )}
                     {comprobante.tipo_pedido === "domicilio" && (
                       <>
-                        <div className="comprobante-fila">
-                          <span>A nombre de</span>
-                          <strong>{comprobante.nombre_cliente_domicilio}</strong>
-                        </div>
                         <div className="comprobante-fila">
                           <span>Teléfono</span>
                           <strong>{comprobante.telefono_domicilio}</strong>
@@ -1084,7 +1086,7 @@ export default function CashierPOS() {
               <span>
                 {tipoPedido === "domicilio"
                   ? `Domicilio ${nombreCliente.trim() ? "· " + nombreCliente.trim() : ""}`
-                  : "Cliente: Mostrador"}
+                  : `Cliente: ${nombreCliente.trim() || "Mostrador"}`}
               </span>
               {carrito.length > 0 && (
                 <button type="button" className="btn-enlace" onClick={vaciarPedido}>
@@ -1092,6 +1094,21 @@ export default function CashierPOS() {
                 </button>
               )}
             </div>
+
+            {tipoPedido === "local" && (
+              <div className="campo">
+                <label htmlFor="pos-nombre-cliente-local">Nombre del cliente (opcional)</label>
+                <input
+                  id="pos-nombre-cliente-local"
+                  className="entrada"
+                  type="text"
+                  maxLength={150}
+                  placeholder="Ej. Juan Pérez"
+                  value={nombreCliente}
+                  onChange={(e) => setNombreCliente(e.target.value)}
+                />
+              </div>
+            )}
 
             {tipoPedido === "domicilio" && (
               <div className="pos-domicilio-seccion">

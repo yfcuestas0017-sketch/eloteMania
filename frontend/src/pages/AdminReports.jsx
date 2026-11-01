@@ -886,12 +886,16 @@ export default function AdminReports() {
                         <small className="caja-comprobante-tag">
                           {pedido.numero_comprobante}
                         </small>
-                        {pedido.tipo_pedido === "domicilio" && pedido.nombre_cliente_domicilio && (
+                        {pedido.nombre_cliente_domicilio && (
                           <div style={{ fontSize: "11px", color: "var(--apagado)", marginTop: "3px", lineHeight: "1.3" }}>
                             👤 {pedido.nombre_cliente_domicilio}
-                            {pedido.telefono_domicilio && <span> · 📞 {pedido.telefono_domicilio}</span>}
-                            <br />
-                            📍 {pedido.direccion_domicilio}{pedido.barrio_domicilio ? ` (${pedido.barrio_domicilio})` : ""}
+                            {pedido.tipo_pedido === "domicilio" && (
+                              <>
+                                {pedido.telefono_domicilio && <span> · 📞 {pedido.telefono_domicilio}</span>}
+                                <br />
+                                📍 {pedido.direccion_domicilio}{pedido.barrio_domicilio ? ` (${pedido.barrio_domicilio})` : ""}
+                              </>
+                            )}
                           </div>
                         )}
                       </div>

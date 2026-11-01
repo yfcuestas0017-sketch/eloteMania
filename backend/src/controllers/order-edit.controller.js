@@ -613,7 +613,7 @@ export async function editarPedido(req, res) {
         esDomicilio ? direccion : null,
         esDomicilio ? barrio : null,
         esDomicilio ? telefono : null,
-        esDomicilio ? nombreCliente : null,
+        nombreCliente || null,
         (costoDomicilioCentavos / 100).toFixed(2),
         subtotal,
         total
@@ -692,7 +692,7 @@ export async function editarPedido(req, res) {
         direccion_domicilio: esDomicilio ? direccion : null,
         barrio_domicilio: esDomicilio ? barrio : null,
         telefono_domicilio: esDomicilio ? telefono : null,
-        nombre_cliente_domicilio: esDomicilio ? nombreCliente : null,
+        nombre_cliente_domicilio: nombreCliente || null,
         costo_domicilio: (costoDomicilioCentavos / 100).toFixed(2),
         productos: lineasNuevas
       }

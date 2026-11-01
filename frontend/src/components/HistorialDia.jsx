@@ -65,9 +65,10 @@ export default function HistorialDia({ seleccion, nombreCajero, onCerrar, onVerC
                     )}
                   </div>
                   <small>{pedido.numero_comprobante}</small>
-                  {pedido.tipo_pedido === "domicilio" && pedido.nombre_cliente_domicilio && (
+                  {pedido.nombre_cliente_domicilio && (
                     <div style={{ fontSize: "11px", color: "var(--apagado)", marginTop: "2px" }}>
-                      👤 {pedido.nombre_cliente_domicilio} · 📍 {pedido.barrio_domicilio || pedido.direccion_domicilio}
+                      👤 {pedido.nombre_cliente_domicilio}
+                      {pedido.tipo_pedido === "domicilio" && ` · 📍 ${pedido.barrio_domicilio || pedido.direccion_domicilio}`}
                     </div>
                   )}
                 </div>

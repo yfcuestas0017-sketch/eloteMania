@@ -119,12 +119,14 @@ export default function ComprobanteModal({ comprobante, onCerrar, onImpresionReg
                   <span>Cajero</span>
                   <strong>{comprobante.cajero || "Caja principal"}</strong>
                 </div>
+                {comprobante.nombre_cliente_domicilio && (
+                  <div className="comprobante-fila">
+                    <span>{comprobante.tipo_pedido === "domicilio" ? "A nombre de" : "Cliente"}</span>
+                    <strong>{comprobante.nombre_cliente_domicilio}</strong>
+                  </div>
+                )}
                 {comprobante.tipo_pedido === "domicilio" && (
                   <>
-                    <div className="comprobante-fila">
-                      <span>A nombre de</span>
-                      <strong>{comprobante.nombre_cliente_domicilio}</strong>
-                    </div>
                     <div className="comprobante-fila">
                       <span>Teléfono</span>
                       <strong>{comprobante.telefono_domicilio}</strong>

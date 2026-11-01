@@ -111,13 +111,12 @@ export async function checkout(req, res) {
   const costoDomicilio = tipoPedido === "domicilio"
     ? Math.round(Number(costo_domicilio || 0) * 100)
     : 0;
+  const nombreCliente = String(nombre_cliente_domicilio || "").trim().slice(0, 150);
 
   if (tipoPedido === "domicilio") {
     const direccion = String(direccion_domicilio || "").trim();
     const barrio = String(barrio_domicilio || "").trim();
     const telefono = String(telefono_domicilio || "").trim();
-    const nombreCliente = String(nombre_cliente_domicilio || "").trim();
-
     if (!direccion) {
       return res.status(400).json({
         mensaje: "Debes indicar la dirección del domicilio."
@@ -376,7 +375,7 @@ export async function checkout(req, res) {
         tipoPedido === "domicilio" ? String(direccion_domicilio || "").trim().slice(0, 250) : null,
         tipoPedido === "domicilio" ? String(barrio_domicilio || "").trim().slice(0, 150) : null,
         tipoPedido === "domicilio" ? String(telefono_domicilio || "").trim().slice(0, 30) : null,
-        tipoPedido === "domicilio" ? String(nombre_cliente_domicilio || "").trim().slice(0, 150) : null,
+        nombreCliente || null,
         (costoDomicilio / 100).toFixed(2)
       ]
     );
@@ -513,11 +512,11 @@ export async function checkout(req, res) {
         numero_pedido: pedido.numero_pedido,
         numero_dia: pedido.numero_dia,
         tipo_pedido: tipoPedido,
+        nombre_cliente_domicilio: nombreCliente || null,
         ...(tipoPedido === "domicilio" && {
           direccion_domicilio: String(direccion_domicilio || "").trim(),
           barrio_domicilio: String(barrio_domicilio || "").trim(),
           telefono_domicilio: String(telefono_domicilio || "").trim(),
-          nombre_cliente_domicilio: String(nombre_cliente_domicilio || "").trim(),
           costo_domicilio: (costoDomicilio / 100).toFixed(2)
         })
       },
@@ -531,7 +530,7 @@ export async function checkout(req, res) {
         direccion_domicilio: tipoPedido === "domicilio" ? String(direccion_domicilio || "").trim() : null,
         barrio_domicilio: tipoPedido === "domicilio" ? String(barrio_domicilio || "").trim() : null,
         telefono_domicilio: tipoPedido === "domicilio" ? String(telefono_domicilio || "").trim() : null,
-        nombre_cliente_domicilio: tipoPedido === "domicilio" ? String(nombre_cliente_domicilio || "").trim() : null,
+        nombre_cliente_domicilio: nombreCliente || null,
         costo_domicilio: tipoPedido === "domicilio" ? (costoDomicilio / 100).toFixed(2) : "0.00"
       }
     });
