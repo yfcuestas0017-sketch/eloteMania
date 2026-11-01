@@ -8,8 +8,11 @@ import {
   LogOut,
   Menu,
   ShoppingBasket,
+  Banknote,
+  Package,
   Tag,
   Users,
+  WalletCards,
   Utensils,
   Sparkles,
   UserRound,
@@ -26,6 +29,8 @@ const AREAS = {
     enlaces: [
       { to: "/admin", texto: "Resumen", icono: ChartColumn, exacto: true },
       { to: "/admin/productos", texto: "Productos", icono: Utensils },
+      { to: "/admin/inventario", texto: "Inventario", icono: Package },
+      { to: "/admin/caja-diaria", texto: "Caja diaria", icono: WalletCards },
       { to: "/admin/adicionales", texto: "Adicionales", icono: Sparkles },
       { to: "/admin/categorias", texto: "Categorías", icono: Tag },
       { to: "/admin/usuarios", texto: "Usuarios", icono: Users },
@@ -37,6 +42,7 @@ const AREAS = {
     enlaces: [
       { to: "/caja", texto: "Inicio", icono: House, exacto: true },
       { to: "/caja/ventas", texto: "Punto de venta", icono: ShoppingBasket },
+      { to: "/caja/cuenta", texto: "Cuenta e inventario", icono: Banknote },
       { to: "/caja/reportes", texto: "Reportes y pedidos", icono: FileText }
     ]
   }

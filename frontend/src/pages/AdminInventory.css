@@ -1,0 +1,86 @@
+.admin-inventario-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.admin-inventario-ajuste {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-inventario-ajuste h2,
+.admin-inventario-lista-cabecera h2 {
+  margin: 0;
+}
+
+.admin-inventario-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.6fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.admin-inventario-acciones,
+.admin-inventario-lista-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-inventario-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 300px);
+  color: var(--apagado);
+}
+
+.admin-inventario-busqueda .entrada {
+  width: 100%;
+}
+
+.admin-inventario-codigo {
+  display: block;
+  color: var(--apagado);
+  font-size: 11px;
+}
+
+.admin-inventario-ayuda {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.admin-inventario-ayuda a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--rojo);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-inventario-exito {
+  border: 1px solid #b8dfc7;
+  background: #eaf6ed;
+  color: #17653a;
+}
+
+@media (max-width: 760px) {
+  .admin-inventario-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-inventario-lista-cabecera {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-inventario-busqueda {
+    width: 100%;
+  }
+}

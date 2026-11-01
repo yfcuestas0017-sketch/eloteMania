@@ -13,6 +13,8 @@ import paymentMethodRoutes from "./routes/payment-method.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import additionRoutes from "./routes/addition.routes.js";
+import cashRegisterRoutes from "./routes/cash-register.routes.js";
+import inventoryRoutes from "./routes/inventory.routes.js";
 
 const app = express();
 
@@ -62,6 +64,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/additions", additionRoutes);
+app.use("/api/cash-register", cashRegisterRoutes);
+app.use("/api/inventory", inventoryRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/reports", reportRoutes);

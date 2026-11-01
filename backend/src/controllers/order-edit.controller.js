@@ -51,7 +51,7 @@ function etiqueta(fila) {
 
 // Un cajero solo toca sus propios pedidos y solo del día de hoy (zona Bogotá).
 // El administrador puede corregir cualquier pedido vigente.
-function validarAcceso(req, fila) {
+async function validarAcceso(req, fila, db = pool) {
   if (fila.estado !== "completado" || fila.estado_venta !== "vigente") {
     return { status: 409, mensaje: "Este pedido ya fue anulado y no se puede modificar." };
   }
@@ -67,6 +67,22 @@ function validarAcceso(req, fila) {
     return {
       status: 403,
       mensaje: "Solo puedes modificar pedidos de hoy. Pídele a un administrador que lo corrija."
+    };
+  }
+
+  const turno = await db.query(
+    `SELECT turno_id
+     FROM cajas_turnos
+     WHERE cajero_id = $1
+       AND fecha = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+       AND cerrada_en IS NULL
+     FOR UPDATE`,
+    [Number(req.user.usuario_id)]
+  );
+  if (!turno.rowCount) {
+    return {
+      status: 409,
+      mensaje: "La caja ya está cerrada; solicita a un administrador que corrija este pedido."
     };
   }
 
@@ -199,7 +215,7 @@ export async function obtenerPedidoParaEdicion(req, res) {
     }
 
     const fila = cabecera.rows[0];
-    const denegado = validarAcceso(req, fila);
+    const denegado = await validarAcceso(req, fila);
 
     if (denegado) {
       return res.status(denegado.status).json({ mensaje: denegado.mensaje });
@@ -360,7 +376,7 @@ export async function editarPedido(req, res) {
     }
 
     const fila = cabecera.rows[0];
-    const denegado = validarAcceso(req, fila);
+    const denegado = await validarAcceso(req, fila, cliente);
 
     if (denegado) {
       await cliente.query("ROLLBACK");
@@ -721,7 +737,7 @@ export async function anularPedido(req, res) {
     }
 
     const fila = cabecera.rows[0];
-    const denegado = validarAcceso(req, fila);
+    const denegado = await validarAcceso(req, fila, cliente);
 
     if (denegado) {
       await cliente.query("ROLLBACK");

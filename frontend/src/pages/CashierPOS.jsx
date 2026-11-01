@@ -37,6 +37,7 @@ const esEfectivo = (nombre = "") => /efectivo/i.test(nombre);
 
 export default function CashierPOS() {
   const usuario = leerUsuario();
+  const esAdmin = usuario.roles?.includes("ADMIN");
   const navigate = useNavigate();
   const [parametros] = useSearchParams();
   const editarId = parametros.get("editar");
@@ -52,6 +53,7 @@ export default function CashierPOS() {
   const [categoriaActiva, setCategoriaActiva] = useState("todas");
   const [comprobante, setComprobante] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [cajaAbierta, setCajaAbierta] = useState(null);
   const [confirmando, setConfirmando] = useState(false);
   const [error, setError] = useState("");
   const [tipoPedido, setTipoPedido] = useState("local");
@@ -77,13 +79,15 @@ export default function CashierPOS() {
           respuestaProductos,
           respuestaAdicionales,
           respuestaMetodos,
-          respuestaCategorias
+          respuestaCategorias,
+          estadoCaja
         ] =
           await Promise.all([
             apiFetch("/products"),
             apiFetch("/additions/venta"),
             apiFetch("/payment-methods"),
-            apiFetch("/categories")
+            apiFetch("/categories"),
+            apiFetch("/cash-register/resumen")
           ]);
 
         setProductos(respuestaProductos.productos || []);
@@ -94,6 +98,9 @@ export default function CashierPOS() {
             ? respuestaMetodos
             : respuestaMetodos.metodos || []
         );
+        setCajaAbierta(
+          esAdmin || Boolean(estadoCaja.turno_abierto)
+        );
       } catch (err) {
         setError(err.message);
       } finally {
@@ -102,7 +109,7 @@ export default function CashierPOS() {
     }
 
     cargarDatos();
-  }, []);
+  }, [esAdmin]);
 
   useEffect(() => {
     if (!editarId || cargando) return;
@@ -399,6 +406,11 @@ export default function CashierPOS() {
 
     if (carrito.length === 0) {
       setError("Agrega al menos un producto al pedido.");
+      return;
+    }
+
+    if (!pedidoEdicion && cajaAbierta === false) {
+      setError("Abre tu caja antes de registrar pedidos.");
       return;
     }
 
@@ -848,6 +860,12 @@ export default function CashierPOS() {
   return (
     <AppShell area="caja" seccion={pedidoEdicion ? "Editar pedido" : "Punto de venta"}>
       <div className="pagina caja-pagina">
+        {cajaAbierta === false && !pedidoEdicion && (
+          <div className="aviso aviso-error" role="alert">
+            Debes abrir tu caja antes de cobrar pedidos.{" "}
+            <a href="/caja/cuenta">Ir a cuenta e inventario</a>
+          </div>
+        )}
         <header className="pagina-cabecera">
           <div>
             <h1 className="pagina-titulo">

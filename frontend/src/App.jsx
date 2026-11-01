@@ -14,6 +14,9 @@ import AdminReports from "./pages/AdminReports";
 import CashierPOS from "./pages/CashierPOS";
 import Profile from "./pages/Profile";
 import CashierReports from "./pages/CashierReports";
+import CashierCashRegister from "./pages/CashierCashRegister";
+import AdminInventory from "./pages/AdminInventory";
+import AdminDailyCash from "./pages/AdminDailyCash";
 
 export default function App() {
   return (
@@ -25,6 +28,8 @@ export default function App() {
         <Route element={<ProtectedRoute rolesPermitidos={["ADMIN"]} />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/productos" element={<AdminProducts />} />
+          <Route path="/admin/inventario" element={<AdminInventory />} />
+          <Route path="/admin/caja-diaria" element={<AdminDailyCash />} />
           <Route path="/admin/categorias" element={<AdminCategories />} />
           <Route path="/admin/adicionales" element={<AdminAdditions />} />
           <Route path="/admin/usuarios" element={<AdminUsers />} />
@@ -41,6 +46,7 @@ export default function App() {
           <Route path="/caja/pendientes" element={<Navigate to="/caja/ventas" replace />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/caja/reportes" element={<CashierReports />} />
+          <Route path="/caja/cuenta" element={<CashierCashRegister />} />
         </Route>
 
         <Route path="*" element={<Menu />} />

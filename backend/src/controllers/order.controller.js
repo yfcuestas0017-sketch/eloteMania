@@ -174,6 +174,27 @@ export async function checkout(req, res) {
   try {
     await cliente.query("BEGIN");
 
+    if (
+      req.user.roles?.includes("CAJERO") &&
+      !req.user.roles?.includes("ADMIN")
+    ) {
+      const turnoAbierto = await cliente.query(
+        `SELECT turno_id
+         FROM cajas_turnos
+         WHERE cajero_id = $1
+           AND fecha = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+           AND cerrada_en IS NULL
+         FOR UPDATE`,
+        [usuarioId]
+      );
+      if (!turnoAbierto.rowCount) {
+        await cliente.query("ROLLBACK");
+        return res.status(409).json({
+          mensaje: "Abre tu caja antes de registrar pedidos."
+        });
+      }
+    }
+
     const metodo = await cliente.query(
       `SELECT metodo_pago_id
        FROM metodos_pago

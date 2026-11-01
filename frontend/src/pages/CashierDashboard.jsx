@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, FileText, ShoppingBasket } from "lucide-react";
+import { ArrowRight, Banknote, FileText, ShoppingBasket } from "lucide-react";
 import AppShell from "../components/AppShell";
 import { apiFetch } from "../services/api";
 import { fechaLarga, fechaLocal, leerUsuario, pesos } from "../lib/formato";
@@ -74,6 +74,15 @@ export default function CashierDashboard() {
             <div>
               <h2>Mis pedidos y reportes</h2>
               <p>Historial de cobros realizados y reimpresión de vouchers.</p>
+            </div>
+            <ArrowRight size={20} aria-hidden="true" />
+          </Link>
+
+          <Link to="/caja/cuenta" className="caja-acceso">
+            <Banknote size={28} aria-hidden="true" />
+            <div>
+              <h2>Cuenta e inventario</h2>
+              <p>Apertura, gastos, cierre de caja y conteo de existencias.</p>
             </div>
             <ArrowRight size={20} aria-hidden="true" />
           </Link>
