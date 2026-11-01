@@ -126,25 +126,105 @@ export async function obtenerProductosMasVendidos(req, res) {
     const filtrarTipo = tipoPedido === "local" || tipoPedido === "domicilio";
 
     const resultado = await query(
-      `SELECT
-         dp.producto_id,
-         dp.nombre_producto,
-         COALESCE(c.nombre, 'Sin categoría') AS categoria,
-         SUM(dp.cantidad)::numeric(12, 2) AS cantidad_vendida,
-         SUM(dp.total_linea)::numeric(12, 2) AS total_recaudado
-       FROM detalle_pedido dp
-       JOIN pedidos p ON p.pedido_id = dp.pedido_id
-       JOIN ventas v ON v.pedido_id = p.pedido_id
-       LEFT JOIN productos pr ON pr.producto_id = dp.producto_id
-       LEFT JOIN categorias c ON c.categoria_id = pr.categoria_id
-       WHERE v.estado = 'vigente'
-         AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
-             BETWEEN $1::date AND $2::date
-         AND ($4::boolean = FALSE OR v.cajero_id = $5::bigint)
-         AND ($6::boolean = FALSE OR p.tipo_pedido = $7::varchar)
-       GROUP BY dp.producto_id, dp.nombre_producto, c.nombre
-       ORDER BY cantidad_vendida DESC, total_recaudado DESC
-       LIMIT $3`,
+      `WITH ventas_filtradas AS (
+         SELECT v.pedido_id, p.costo_domicilio
+         FROM ventas v
+         JOIN pedidos p ON p.pedido_id = v.pedido_id
+         WHERE v.estado = 'vigente'
+           AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date
+               BETWEEN $1::date AND $2::date
+           AND ($4::boolean = FALSE OR v.cajero_id = $5::bigint)
+           AND ($6::boolean = FALSE OR p.tipo_pedido = $7::varchar)
+       ),
+       productos_vendidos AS (
+         SELECT
+           dp.producto_id,
+           dp.nombre_producto,
+           COALESCE(c.nombre, 'Sin categoría') AS categoria,
+           SUM(dp.cantidad)::numeric(12, 2) AS cantidad_vendida,
+           SUM(dp.total_linea)::numeric(12, 2) AS total_recaudado
+         FROM detalle_pedido dp
+         JOIN ventas_filtradas vf ON vf.pedido_id = dp.pedido_id
+         LEFT JOIN productos pr ON pr.producto_id = dp.producto_id
+         LEFT JOIN categorias c ON c.categoria_id = pr.categoria_id
+         GROUP BY dp.producto_id, dp.nombre_producto, c.nombre
+       ),
+       productos_rankeados AS (
+         SELECT
+           pv.*,
+           ROW_NUMBER() OVER (
+             ORDER BY pv.cantidad_vendida DESC, pv.total_recaudado DESC
+           ) AS posicion
+         FROM productos_vendidos pv
+       ),
+       conceptos AS (
+         SELECT
+           producto_id,
+           NULL::bigint AS adicional_id,
+           nombre_producto,
+           categoria,
+           cantidad_vendida,
+           total_recaudado,
+           'producto'::text AS tipo_item,
+           posicion AS orden
+         FROM productos_rankeados
+         WHERE posicion <= $3
+
+         UNION ALL
+
+         SELECT
+           NULL::bigint,
+           NULL::bigint,
+           'Otros productos',
+           'Resto del catálogo',
+           SUM(cantidad_vendida)::numeric(12, 2),
+           SUM(total_recaudado)::numeric(12, 2),
+           'otros_productos'::text,
+           $3::int + 1
+         FROM productos_rankeados
+         WHERE posicion > $3
+         HAVING COUNT(*) > 0
+
+         UNION ALL
+
+         SELECT
+           NULL::bigint,
+           pa.adicional_id,
+           pa.nombre_adicional,
+           'Adicional independiente',
+           SUM(pa.cantidad)::numeric(12, 2),
+           SUM(pa.total_linea)::numeric(12, 2),
+           'adicional'::text,
+           $3::int + 2
+         FROM pedido_adicionales pa
+         JOIN ventas_filtradas vf ON vf.pedido_id = pa.pedido_id
+         GROUP BY pa.adicional_id, pa.nombre_adicional
+
+         UNION ALL
+
+         SELECT
+           NULL::bigint,
+           NULL::bigint,
+           'Costo de domicilio',
+           'Domicilio',
+           COUNT(*)::numeric(12, 2),
+           SUM(costo_domicilio)::numeric(12, 2),
+           'domicilio'::text,
+           $3::int + 3
+         FROM ventas_filtradas
+         WHERE costo_domicilio > 0
+         HAVING SUM(costo_domicilio) > 0
+       )
+       SELECT
+         producto_id,
+         adicional_id,
+         nombre_producto,
+         categoria,
+         cantidad_vendida,
+         total_recaudado,
+         tipo_item
+       FROM conceptos
+       ORDER BY orden, nombre_producto`,
       [rango.desde, rango.hasta, limite, filtrarCajero, cajeroId, filtrarTipo, tipoPedido]
     );
 

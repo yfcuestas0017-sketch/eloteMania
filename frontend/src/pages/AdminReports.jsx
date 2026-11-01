@@ -164,7 +164,9 @@ export default function AdminReports() {
   // Cálculos para la gráfica de productos más vendidos
   const maxUnidadesProducto = useMemo(() => {
     return Math.max(
-      ...productosMasVendidos.map((p) => Number(p.cantidad_vendida || 0)),
+      ...productosMasVendidos
+        .filter((p) => p.tipo_item !== "domicilio")
+        .map((p) => Number(p.cantidad_vendida || 0)),
       1
     );
   }, [productosMasVendidos]);
@@ -176,7 +178,19 @@ export default function AdminReports() {
     );
   }, [productosMasVendidos]);
 
-  const productoTop = productosMasVendidos[0] || null;
+  const totalConceptosProductos = useMemo(
+    () =>
+      productosMasVendidos.reduce(
+        (total, producto) => total + Number(producto.total_recaudado || 0),
+        0
+      ),
+    [productosMasVendidos]
+  );
+  const productoTop =
+    productosMasVendidos.find((producto) => producto.tipo_item === "producto") || null;
+  const conceptosCoinciden =
+    Math.round(totalConceptosProductos * 100) ===
+    Math.round(Number(resumen?.total_recaudado || 0) * 100);
 
   return (
     <AppShell area="admin" seccion="Reportes">
@@ -698,28 +712,42 @@ export default function AdminReports() {
 
             <p className="campo-ayuda" style={{ marginBottom: 12 }}>
               {cajeroSeleccionado
-                ? `Artículos despachados exclusivamente en las ventas de ${cajeroSeleccionado.nombres}.`
-                : "Ranking de los artículos con mayor rotación en el negocio."}
+                ? `Artículos despachados exclusivamente en las ventas de ${cajeroSeleccionado.nombres}. La suma incluye productos, adicionales independientes y domicilios.`
+                : "La suma incluye productos, adicionales independientes y domicilios. Los productos fuera del top 10 se agrupan en «Otros productos»."}
             </p>
 
             <div className="grafica-contenedor">
               {productosMasVendidos.map((prod, index) => {
                 const unidades = Number(prod.cantidad_vendida || 0);
                 const dinero = Number(prod.total_recaudado || 0);
+                const esDomicilio = prod.tipo_item === "domicilio";
+                const esProducto =
+                  prod.tipo_item === "producto" || prod.tipo_item === "otros_productos";
                 const porcentajeBarra =
                   metricaProductos === "unidades"
                     ? (unidades / maxUnidadesProducto) * 100
                     : (dinero / maxDineroProducto) * 100;
 
                 const claseTop =
-                  index === 0 ? "top-1" : index === 1 ? "top-2" : index === 2 ? "top-3" : "";
+                  prod.tipo_item !== "producto"
+                    ? ""
+                    : index === 0
+                      ? "top-1"
+                      : index === 1
+                        ? "top-2"
+                        : index === 2
+                          ? "top-3"
+                          : "";
 
                 return (
-                  <div key={prod.producto_id || index} className="barra-item">
+                  <div
+                    key={`${prod.tipo_item}-${prod.producto_id || prod.adicional_id || index}`}
+                    className="barra-item"
+                  >
                     <div className="barra-info">
                       <div className="barra-titulo">
                         <span className={`barra-posicion ${claseTop}`}>
-                          {index + 1}
+                          {prod.tipo_item === "producto" ? index + 1 : "•"}
                         </span>
                         <span>{prod.nombre_producto}</span>
                         <span className="chip" style={{ fontSize: 10, padding: "2px 6px" }}>
@@ -728,7 +756,7 @@ export default function AdminReports() {
                       </div>
                       <span className="barra-valor">
                         {metricaProductos === "unidades"
-                          ? `${Math.round(unidades)} uds`
+                          ? `${Math.round(unidades)} ${esDomicilio ? "entregas" : "uds"}`
                           : pesos(dinero)}
                       </span>
                     </div>
@@ -742,13 +770,13 @@ export default function AdminReports() {
 
                     <div className="barra-sub">
                       <span>
-                        {metricaProductos === "unidades"
+                        {metricaProductos === "unidades" || !esProducto
                           ? `Total: ${pesos(dinero)}`
                           : `${Math.round(unidades)} unidades vendidas`}
                       </span>
                       <span>
-                        {totalGeneralCajeros > 0
-                          ? `${Math.round((dinero / (cajeroSeleccionado ? Number(resumen?.total_recaudado || 1) : totalGeneralCajeros)) * 100)}% de sus ventas`
+                        {Number(resumen?.total_recaudado || 0) > 0
+                          ? `${Math.round((dinero / Number(resumen.total_recaudado)) * 100)}% del recaudo`
                           : ""}
                       </span>
                     </div>
@@ -758,6 +786,26 @@ export default function AdminReports() {
 
               {productosMasVendidos.length === 0 && (
                 <p className="vacio">No hay ventas de productos registradas en este período.</p>
+              )}
+
+              {productosMasVendidos.length > 0 && (
+                <div className="barra-item" aria-label="Comprobación del recaudo">
+                  <div className="barra-info">
+                    <strong>Suma de conceptos</strong>
+                    <strong>{pesos(totalConceptosProductos)}</strong>
+                  </div>
+                  <div className="barra-info">
+                    <span>Total recaudado</span>
+                    <span>{pesos(resumen?.total_recaudado)}</span>
+                  </div>
+                  <p className="campo-ayuda" style={{ margin: 0 }}>
+                    {conceptosCoinciden
+                      ? "La suma coincide con el total recaudado."
+                      : `Diferencia: ${pesos(
+                          Number(resumen?.total_recaudado || 0) - totalConceptosProductos
+                        )}`}
+                  </p>
+                </div>
               )}
             </div>
           </section>
