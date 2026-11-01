@@ -2,10 +2,23 @@
   display: flex;
   align-items: end;
   gap: 10px;
+  min-width: 0;
 }
 
 .admin-caja-filtros .campo {
+  min-width: 0;
   margin: 0;
+}
+
+.admin-caja-filtros .entrada {
+  min-width: 0;
+  width: 100%;
+}
+
+.admin-caja-turno,
+.admin-caja-turno-cabecera,
+.admin-caja-listas > section {
+  min-width: 0;
 }
 
 .admin-caja-cifras {
@@ -96,6 +109,8 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .admin-caja-lista small {
@@ -116,6 +131,7 @@
 
 .admin-caja-vacia p {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 760px) {
@@ -124,7 +140,34 @@
     flex-direction: column;
   }
 
+  .admin-caja-filtros .btn {
+    width: 100%;
+  }
+
   .admin-caja-listas {
     grid-template-columns: 1fr;
+  }
+
+  .admin-caja-turno-cabecera {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-caja-detalles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .admin-caja-detalles > div {
+    padding: 10px;
+  }
+
+  .admin-caja-lista li {
+    gap: 8px;
+  }
+
+  .admin-caja-vacia {
+    align-items: flex-start;
   }
 }

@@ -14,17 +14,23 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-width: 0;
 }
 
 .caja-panel-titulo {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  min-width: 0;
 }
 
 .caja-panel-titulo > svg {
   flex: none;
   color: var(--verde);
+}
+
+.caja-panel-titulo > div {
+  min-width: 0;
 }
 
 .caja-panel-titulo h2,
@@ -45,6 +51,7 @@
 
 .caja-formulario .campo {
   flex: 1;
+  min-width: 0;
 }
 
 .caja-formulario-vertical {
@@ -55,10 +62,13 @@
 
 .caja-tabla-contenedor {
   overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .caja-tabla {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -112,6 +122,11 @@
   border-bottom: 1px solid var(--borde, #e8e1d7);
 }
 
+.caja-lista-egresos li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .caja-estado {
   padding: 12px 14px;
   border-radius: var(--radio-s);
@@ -135,5 +150,25 @@
   .caja-formulario {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .caja-formulario > .btn,
+  .caja-guardar-conteo {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .caja-cifras {
+    grid-template-columns: 1fr;
+  }
+
+  .caja-panel-titulo {
+    gap: 8px;
+  }
+
+  .caja-lista-egresos li {
+    gap: 10px;
   }
 }

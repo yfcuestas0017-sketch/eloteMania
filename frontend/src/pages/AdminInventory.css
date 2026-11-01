@@ -13,11 +13,13 @@
 .admin-inventario-ajuste h2,
 .admin-inventario-lista-cabecera h2 {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .admin-inventario-form {
   display: grid;
-  grid-template-columns: minmax(150px, 0.6fr) minmax(220px, 1fr) auto;
+  grid-template-columns: minmax(0, 0.6fr) minmax(0, 1fr) auto;
   align-items: end;
   gap: 14px;
 }
@@ -40,6 +42,34 @@
 
 .admin-inventario-busqueda .entrada {
   width: 100%;
+}
+
+.admin-inventario-filtros-fecha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 420px);
+  gap: 10px;
+}
+
+.admin-inventario-filtros-fecha .campo {
+  min-width: 0;
+  margin: 0;
+}
+
+.admin-inventario-filtros-fecha .entrada {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-inventario-ajuste,
+.admin-inventario-lista-cabecera,
+.admin-inventario-form > *,
+.admin-inventario-acciones {
+  min-width: 0;
+}
+
+.admin-inventario-acciones {
+  flex-wrap: wrap;
 }
 
 .admin-inventario-codigo {
@@ -82,5 +112,30 @@
 
   .admin-inventario-busqueda {
     width: 100%;
+  }
+
+  .admin-inventario-filtros-fecha {
+    width: 100%;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .admin-inventario-filtros-fecha {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-inventario-acciones {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .admin-inventario-acciones .btn {
+    width: 100%;
+  }
+
+  .admin-inventario-ayuda {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

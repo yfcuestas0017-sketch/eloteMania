@@ -20,32 +20,45 @@ function fechaMovimiento(movimiento) {
 export default function AdminInventory() {
   const [productos, setProductos] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
+  const [fechaDesde, setFechaDesde] = useState(fechaLocal());
+  const [fechaHasta, setFechaHasta] = useState(fechaLocal());
   const [busqueda, setBusqueda] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
   const [stockNuevo, setStockNuevo] = useState("");
   const [motivo, setMotivo] = useState("");
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
+  const [cargando, setCargando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [recargar, setRecargar] = useState(0);
 
+  const rangoFechaInvalido = fechaDesde > fechaHasta;
+  const movimientosVisibles = rangoFechaInvalido ? [] : movimientos;
+
   useEffect(() => {
+    if (rangoFechaInvalido) return;
+
     let cancelado = false;
     async function cargar() {
+      setCargando(true);
+      setError("");
       try {
-        const datos = await apiFetch("/inventory/admin");
+        const parametros = new URLSearchParams({ desde: fechaDesde, hasta: fechaHasta });
+        const datos = await apiFetch(`/inventory/admin?${parametros}`);
         if (cancelado) return;
         setProductos(datos.productos || []);
         setMovimientos(datos.movimientos || []);
       } catch (err) {
         if (!cancelado) setError(err.message);
+      } finally {
+        if (!cancelado) setCargando(false);
       }
     }
     cargar();
     return () => {
       cancelado = true;
     };
-  }, [recargar]);
+  }, [recargar, fechaDesde, fechaHasta, rangoFechaInvalido]);
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -188,8 +201,8 @@ export default function AdminInventory() {
               />
             </label>
           </div>
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="tabla-contenedor tabla-tarjetas-contenedor admin-inventario-tabla">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Producto</th>
@@ -206,19 +219,19 @@ export default function AdminInventory() {
                   const bajo = controla && Number(producto.stock_actual) <= Number(producto.stock_minimo);
                   return (
                     <tr key={producto.producto_id}>
-                      <td>
+                      <td className="celda-titulo">
                         <strong>{producto.nombre}</strong>
                         <small className="admin-inventario-codigo">{producto.codigo || "Sin código"}</small>
                       </td>
-                      <td>{producto.categoria || "Sin categoría"}</td>
-                      <td>{controla ? `${Number(producto.stock_actual)} unidades` : "Sin control"}</td>
-                      <td>{controla ? Number(producto.stock_minimo) : "—"}</td>
-                      <td>
+                      <td data-label="Categoría">{producto.categoria || "Sin categoría"}</td>
+                      <td data-label="Stock actual">{controla ? `${Number(producto.stock_actual)} unidades` : "Sin control"}</td>
+                      <td data-label="Stock mínimo">{controla ? Number(producto.stock_minimo) : "—"}</td>
+                      <td data-label="Estado">
                         <span className={`chip ${bajo ? "chip-ambar" : "chip-verde"}`}>
                           {!controla ? "No inventariable" : bajo ? "Reponer" : "Disponible"}
                         </span>
                       </td>
-                      <td>
+                      <td className="celda-acciones" data-label="Gestión">
                         {controla && (
                           <button
                             className="btn btn-secundario btn-sm"
@@ -243,9 +256,37 @@ export default function AdminInventory() {
         </section>
 
         <section className="tarjeta">
-          <h2 className="tarjeta-titulo">Historial de movimientos</h2>
-          <div className="tabla-contenedor">
-            <table className="tabla">
+          <div className="admin-inventario-lista-cabecera">
+            <h2 className="tarjeta-titulo">Historial de movimientos</h2>
+            <div className="admin-inventario-filtros-fecha">
+              <label className="campo">
+                <span>Desde</span>
+                <input
+                  className="entrada"
+                  type="date"
+                  value={fechaDesde}
+                  onChange={(event) => setFechaDesde(event.target.value)}
+                />
+              </label>
+              <label className="campo">
+                <span>Hasta</span>
+                <input
+                  className="entrada"
+                  type="date"
+                  value={fechaHasta}
+                  onChange={(event) => setFechaHasta(event.target.value)}
+                />
+              </label>
+            </div>
+          </div>
+          {rangoFechaInvalido && (
+            <p className="aviso aviso-error" role="alert">
+              La fecha inicial no puede ser posterior a la fecha final.
+            </p>
+          )}
+          {cargando && !rangoFechaInvalido && <p className="campo-ayuda">Consultando movimientos…</p>}
+          <div className="tabla-contenedor tabla-tarjetas-contenedor admin-inventario-tabla">
+            <table className="tabla tabla-tarjetas">
               <thead>
                 <tr>
                   <th>Fecha</th>
@@ -258,18 +299,18 @@ export default function AdminInventory() {
                 </tr>
               </thead>
               <tbody>
-                {movimientos.map((movimiento, indice) => (
+                {movimientosVisibles.map((movimiento, indice) => (
                   <tr key={movimiento.movimiento_id || `${movimiento.producto_id}-${movimiento.stock_nuevo}-${indice}`}>
-                    <td>{fechaMovimiento(movimiento)}</td>
-                    <td>{movimiento.producto}</td>
-                    <td>{movimiento.tipo} · {movimiento.cantidad}</td>
-                    <td>{movimiento.stock_anterior}</td>
-                    <td>{movimiento.stock_nuevo}</td>
-                    <td>{movimiento.motivo || "—"}</td>
-                    <td>{movimiento.usuario}</td>
+                    <td data-label="Fecha">{fechaMovimiento(movimiento)}</td>
+                    <td data-label="Producto">{movimiento.producto}</td>
+                    <td data-label="Movimiento">{movimiento.tipo} · {Number(movimiento.cantidad)} unidades</td>
+                    <td data-label="Anterior">{Number(movimiento.stock_anterior)}</td>
+                    <td data-label="Nuevo">{Number(movimiento.stock_nuevo)}</td>
+                    <td className="celda-bloque" data-label="Motivo">{movimiento.motivo || "—"}</td>
+                    <td data-label="Registró">{movimiento.usuario}</td>
                   </tr>
                 ))}
-                {!movimientos.length && (
+                {!rangoFechaInvalido && !movimientosVisibles.length && (
                   <tr><td colSpan="7" className="vacio">No hay movimientos registrados.</td></tr>
                 )}
               </tbody>

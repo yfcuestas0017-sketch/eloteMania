@@ -519,6 +519,14 @@ export async function registrarConteoInventario(req, res, next) {
 }
 
 export async function listarInventarioAdmin(req, res, next) {
+  const desde = req.query.desde;
+  const hasta = req.query.hasta;
+  if (!fechaValida(desde) || !fechaValida(hasta) || desde > hasta) {
+    return res.status(400).json({
+      mensaje: "Selecciona un rango de fechas válido para consultar movimientos."
+    });
+  }
+
   try {
     const [productos, movimientos] = await Promise.all([
       query(
@@ -536,8 +544,17 @@ export async function listarInventarioAdmin(req, res, next) {
          FROM movimientos_inventario mi
          JOIN productos p ON p.producto_id = mi.producto_id
          LEFT JOIN usuarios u ON u.usuario_id = mi.usuario_id
-         ORDER BY mi.ctid DESC
-         LIMIT 200`
+         CROSS JOIN LATERAL (
+           SELECT COALESCE(
+             NULLIF(to_jsonb(mi)->>'creado_en', ''),
+             NULLIF(to_jsonb(mi)->>'fecha_movimiento', ''),
+             NULLIF(to_jsonb(mi)->>'fecha', '')
+           )::timestamptz AS fecha
+         ) fecha_movimiento
+         WHERE fecha_movimiento.fecha >= ($1::date::timestamp AT TIME ZONE 'America/Bogota')
+           AND fecha_movimiento.fecha < (($2::date + 1)::timestamp AT TIME ZONE 'America/Bogota')
+         ORDER BY fecha_movimiento.fecha DESC, mi.ctid DESC`,
+        [desde, hasta]
       )
     ]);
 
