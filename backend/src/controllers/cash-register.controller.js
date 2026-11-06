@@ -90,7 +90,8 @@ export async function obtenerResumenCaja(req, res, next) {
     const cajeroId = Number(req.user.usuario_id);
     const [turno, anterior] = await Promise.all([
       query(
-        `SELECT turno_id, fecha, monto_apertura, efectivo_esperado_cierre,
+        `SELECT turno_id, TO_CHAR(fecha, 'YYYY-MM-DD') AS fecha, monto_apertura,
+                efectivo_esperado_cierre,
                 efectivo_contado, monto_dejado_caja, diferencia_cierre, observacion_cierre,
                 abierta_en, cerrada_en
          FROM cajas_turnos
@@ -160,7 +161,7 @@ export async function abrirCaja(req, res, next) {
     await cliente.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`caja-${cajeroId}`]);
 
     const abierta = await cliente.query(
-      `SELECT fecha FROM cajas_turnos
+      `SELECT turno_id, TO_CHAR(fecha, 'YYYY-MM-DD') AS fecha FROM cajas_turnos
        WHERE cajero_id = $1 AND cerrada_en IS NULL
        ORDER BY fecha DESC LIMIT 1 FOR UPDATE`,
       [cajeroId]
@@ -168,7 +169,9 @@ export async function abrirCaja(req, res, next) {
     if (abierta.rowCount) {
       await cliente.query("ROLLBACK");
       return res.status(409).json({
-        mensaje: `Debes cerrar primero la caja del ${abierta.rows[0].fecha}.`
+        mensaje: `Debes cerrar primero la caja del ${abierta.rows[0].fecha}.`,
+        turno_pendiente_id: abierta.rows[0].turno_id,
+        fecha_pendiente: abierta.rows[0].fecha
       });
     }
 
