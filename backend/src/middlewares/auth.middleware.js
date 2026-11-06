@@ -1,4 +1,22 @@
 import jwt from "jsonwebtoken";
+
+// Sesión deslizante: si a un token válido le queda menos de la mitad de su vida,
+// se entrega uno nuevo en el header X-New-Token. Mientras el usuario trabaje,
+// la sesión nunca se vence a mitad del turno.
+function renovarTokenSiHaceFalta(payload, usuarioId, roles, res) {
+  const ahora = Math.floor(Date.now() / 1000);
+  const vidaTotal = (payload.exp || 0) - (payload.iat || 0);
+  const restante = (payload.exp || 0) - ahora;
+  if (vidaTotal <= 0 || restante > vidaTotal / 2) return;
+
+  const nuevo = jwt.sign({ roles }, process.env.JWT_SECRET, {
+    subject: String(usuarioId),
+    expiresIn: process.env.JWT_EXPIRES_IN || "12h",
+    issuer: "restaurante-pos",
+    audience: "restaurante-pos-web"
+  });
+  res.setHeader("X-New-Token", nuevo);
+}
 import { query } from "../config/db.js";
 
 export async function authenticate(req, res, next) {
@@ -69,6 +87,8 @@ export async function authenticate(req, res, next) {
       usuario_id: usuarioId,
       roles: usuario.roles
     };
+
+    renovarTokenSiHaceFalta(payload, usuarioId, usuario.roles, res);
 
     next();
   } catch (error) {

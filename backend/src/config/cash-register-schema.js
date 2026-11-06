@@ -14,6 +14,8 @@ export async function initializeCashRegisterSchema() {
       monto_dejado_caja NUMERIC(12, 2),
       diferencia_cierre NUMERIC(12, 2),
       observacion_cierre VARCHAR(500),
+      cierre_tardio BOOLEAN NOT NULL DEFAULT FALSE,
+      motivo_cierre_tardio VARCHAR(500),
       abierta_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       cerrada_en TIMESTAMPTZ,
       UNIQUE (cajero_id, fecha)
@@ -26,6 +28,10 @@ export async function initializeCashRegisterSchema() {
       ADD COLUMN IF NOT EXISTS diferencia_apertura NUMERIC(12, 2) NOT NULL DEFAULT 0;
     ALTER TABLE cajas_turnos
       ADD COLUMN IF NOT EXISTS observacion_apertura VARCHAR(500);
+    ALTER TABLE cajas_turnos
+      ADD COLUMN IF NOT EXISTS cierre_tardio BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE cajas_turnos
+      ADD COLUMN IF NOT EXISTS motivo_cierre_tardio VARCHAR(500);
     ALTER TABLE cajas_turnos
       DROP CONSTRAINT IF EXISTS cajas_turnos_cajero_id_fecha_key;
 

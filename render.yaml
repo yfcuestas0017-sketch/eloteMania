@@ -17,7 +17,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: JWT_EXPIRES_IN
-        value: 8h
+        value: 12h
       - key: JWT_SECRET
         generateValue: true   # Render crea uno aleatorio y seguro
       - key: DATABASE_URL

@@ -1,4 +1,3 @@
-
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { query } from "../config/db.js";
@@ -84,7 +83,7 @@ export async function login(req, res, next) {
       process.env.JWT_SECRET,
       {
         subject: String(user.usuario_id),
-        expiresIn: process.env.JWT_EXPIRES_IN || "2h",
+        expiresIn: process.env.JWT_EXPIRES_IN || "12h",
         issuer: "restaurante-pos",
         audience: "restaurante-pos-web"
       }

@@ -132,11 +132,17 @@ export async function obtenerResumenCaja(req, res, next) {
           ? Number(actual.efectivo_esperado_cierre)
           : await obtenerEfectivoEsperadoTurno(actual.turno_id))
       : null;
+    const retiroTotal = montoApertura !== null &&
+      !(actual && !actual.cerrada_en) && montoApertura <= 0.01;
+    const base = Number(process.env.MONTO_BASE_APERTURA);
     res.json({
       fecha: fechaActual.rows[0].fecha,
       turno: actual,
       turno_abierto: Boolean(actual && !actual.cerrada_en),
-      apertura_sugerida: montoApertura,
+      // Si ayer se retiró todo el efectivo, la apertura es una base nueva: no hay nada que comparar.
+      apertura_sugerida: retiroTotal ? null : montoApertura,
+      retiro_total_anterior: retiroTotal,
+      apertura_base: retiroTotal && Number.isFinite(base) && base > 0 ? base : null,
       fecha_cierre_anterior: anterior.rows[0]?.fecha || null,
       ...totales,
       efectivo_esperado: efectivoEsperado,
@@ -187,7 +193,10 @@ export async function abrirCaja(req, res, next) {
     const efectivoAnterior = anterior.rowCount
       ? Number(anterior.rows[0].efectivo_contado)
       : null;
-    const diferencia = efectivoAnterior === null
+    // Si en el cierre anterior no se dejó nada (se retiró todo), el monto de hoy
+    // es una base nueva entregada al cajero y no genera diferencia.
+    const retiroTotalAnterior = efectivoAnterior !== null && efectivoAnterior <= 0.01;
+    const diferencia = efectivoAnterior === null || retiroTotalAnterior
       ? 0
       : montoApertura - efectivoAnterior;
 
@@ -268,6 +277,7 @@ export async function cerrarCaja(req, res, next) {
   const montoDejado = Number(req.body?.monto_dejado_caja);
   const turnoId = req.body?.turno_id == null ? null : Number(req.body.turno_id);
   const observacion = texto(req.body?.observacion, 500);
+  const motivoTardio = texto(req.body?.motivo_cierre_tardio, 500);
   if (turnoId !== null && (!Number.isSafeInteger(turnoId) || turnoId <= 0)) {
     return res.status(400).json({ mensaje: "El turno de caja indicado no es válido." });
   }
@@ -285,7 +295,8 @@ export async function cerrarCaja(req, res, next) {
     await cliente.query("BEGIN");
     const cajeroId = Number(req.user.usuario_id);
     const turno = await cliente.query(
-      `SELECT turno_id, fecha, monto_apertura
+      `SELECT turno_id, TO_CHAR(fecha, 'YYYY-MM-DD') AS fecha, monto_apertura,
+              (fecha < ${FECHA_HOY}) AS es_tardio
        FROM cajas_turnos
        WHERE cajero_id = $1 AND cerrada_en IS NULL
          AND (($2::bigint IS NULL AND fecha = ${FECHA_HOY}) OR turno_id = $2)
@@ -295,6 +306,14 @@ export async function cerrarCaja(req, res, next) {
     if (!turno.rowCount) {
       await cliente.query("ROLLBACK");
       return res.status(409).json({ mensaje: "No hay una caja abierta para cerrar." });
+    }
+    const esTardio = turno.rows[0].es_tardio;
+    if (esTardio && motivoTardio.length < 5) {
+      await cliente.query("ROLLBACK");
+      return res.status(400).json({
+        mensaje: `Esta caja es del ${turno.rows[0].fecha}. Explica por qué no se cerró ese día.`,
+        requiere_motivo_cierre_tardio: true
+      });
     }
     const esperado = await obtenerEfectivoEsperadoTurno(
       turno.rows[0].turno_id,
@@ -315,9 +334,11 @@ export async function cerrarCaja(req, res, next) {
        SET efectivo_esperado_cierre = $2, efectivo_contado = $3,
            monto_dejado_caja = $4, diferencia_cierre = $5,
            observacion_cierre = $6,
+           cierre_tardio = $7, motivo_cierre_tardio = $8,
            cerrada_en = CURRENT_TIMESTAMP
        WHERE turno_id = $1
        RETURNING turno_id, fecha, monto_apertura, efectivo_contado,
+                 cierre_tardio, motivo_cierre_tardio,
                  monto_dejado_caja,
                  efectivo_esperado_cierre, diferencia_cierre,
                  observacion_cierre, cerrada_en`,
@@ -327,7 +348,9 @@ export async function cerrarCaja(req, res, next) {
         efectivoContado.toFixed(2),
         montoDejado.toFixed(2),
         diferencia.toFixed(2),
-        observacion || null
+        observacion || null,
+        esTardio,
+        esTardio ? motivoTardio : null
       ]
     );
     await cliente.query("COMMIT");
@@ -335,6 +358,7 @@ export async function cerrarCaja(req, res, next) {
       mensaje: Math.abs(diferencia) <= 0.01
         ? "Caja cerrada y cuadrada."
         : "Caja cerrada con diferencia registrada.",
+      cierre_tardio: esTardio,
       turno: cerrado.rows[0],
       efectivo_esperado: esperado,
       ...totales

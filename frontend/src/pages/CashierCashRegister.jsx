@@ -47,6 +47,8 @@ export default function CashierCashRegister() {
         setInventario(stock);
         if (estado.apertura_sugerida != null) {
           setApertura(String(estado.apertura_sugerida));
+        } else if (estado.apertura_base != null) {
+          setApertura(String(estado.apertura_base));
         }
         if (estado.turno) {
           const efectivoBase = String(estado.efectivo_esperado ?? "");
@@ -210,7 +212,9 @@ export default function CashierCashRegister() {
                       {resumen.turno ? "Abrir caja nuevamente" : "Abrir caja"}
                     </h2>
                     <p className="campo-ayuda">
-                      {resumen.apertura_sugerida == null
+                      {resumen.retiro_total_anterior
+                        ? "En el cierre anterior se retiró todo el efectivo. Registra la base en efectivo que te entregan para iniciar hoy."
+                        : resumen.apertura_sugerida == null
                         ? "Registra el dinero con el que comienzas el turno."
                         : `Del cierre anterior se dejaron ${pesos(resumen.apertura_sugerida)} en caja. Ese es el monto sugerido para abrir; puedes ajustarlo y explicar la diferencia.`}
                     </p>
@@ -339,6 +343,13 @@ export default function CashierCashRegister() {
                           onChange={(event) => setMontoDejadoCaja(event.target.value)}
                           required
                         />
+                        <button
+                          type="button"
+                          className="btn btn-secundario"
+                          onClick={() => setMontoDejadoCaja("0")}
+                        >
+                          Retiro todo (dejar $0 en caja)
+                        </button>
                         <span className="campo-ayuda">
                           Se dejarán {pesos(Number(montoDejadoCaja) || 0)} y se retirarán{" "}
                           {pesos(Math.max(0, (Number(efectivoContado) || 0) - (Number(montoDejadoCaja) || 0)))}.

@@ -36,7 +36,8 @@ app.use(
       return callback(new Error("Origen no autorizado por CORS"));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["X-New-Token"]
   })
 );
 

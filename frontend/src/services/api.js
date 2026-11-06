@@ -28,6 +28,10 @@ export async function apiFetch(ruta, opciones = {}) {
     headers
   });
 
+  // El backend renueva el token mientras el usuario trabaja (sesión deslizante).
+  const tokenNuevo = respuesta.headers.get("X-New-Token");
+  if (tokenNuevo) localStorage.setItem("pos_token", tokenNuevo);
+
   const tipo = respuesta.headers.get("content-type") || "";
   const datos = tipo.includes("application/json")
     ? await respuesta.json()
@@ -35,7 +39,11 @@ export async function apiFetch(ruta, opciones = {}) {
 
   // Token vencido o cuenta desactivada: se limpia la sesión y se vuelve al login.
   // (No aplica al propio login, donde un 401 significa credenciales incorrectas.)
-  if (respuesta.status === 401 && ruta !== "/auth/login") {
+  if (
+    respuesta.status === 401 &&
+    ruta !== "/auth/login" &&
+    localStorage.getItem("pos_token") === token
+  ) {
     localStorage.removeItem("pos_token");
     localStorage.removeItem("pos_user");
     window.location.assign("/login");
@@ -62,6 +70,9 @@ export async function subirFotoProducto(archivo) {
     },
     body: formData
   });
+
+  const tokenNuevo = respuesta.headers.get("X-New-Token");
+  if (tokenNuevo) localStorage.setItem("pos_token", tokenNuevo);
 
   const datos = await respuesta.json();
 
