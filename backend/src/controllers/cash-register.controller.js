@@ -21,28 +21,30 @@ function fechaValida(fecha) {
     parsed.toISOString().slice(0, 10) === fecha;
 }
 
-async function obtenerTotales(cajeroId, fecha = FECHA_HOY, db = { query }) {
+async function obtenerTotales(cajeroId, fecha = null, db = { query }) {
+  const fechaSql = fecha ? "$2::date" : FECHA_HOY;
+  const parametros = fecha ? [cajeroId, fecha] : [cajeroId];
   const ventas = await db.query(
     `SELECT
        (SELECT COALESCE(SUM(v.total), 0)
         FROM ventas v
         WHERE v.estado = 'vigente' AND v.cajero_id = $1
-          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date = ${fecha}) AS ingresos,
+          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date = ${fechaSql}) AS ingresos,
        (SELECT COALESCE(SUM(pa.valor), 0)
         FROM pagos pa
         JOIN ventas v ON v.pedido_id = pa.pedido_id AND v.estado = 'vigente'
         JOIN metodos_pago mp ON mp.metodo_pago_id = pa.metodo_pago_id
         WHERE pa.estado = 'confirmado' AND mp.nombre ILIKE '%efectivo%'
           AND v.cajero_id = $1
-          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date = ${fecha}) AS ingresos_efectivo`,
-    [cajeroId]
+          AND (v.fecha_venta AT TIME ZONE 'America/Bogota')::date = ${fechaSql}) AS ingresos_efectivo`,
+    parametros
   );
   const egresos = await db.query(
     `SELECT COALESCE(SUM(e.valor), 0) AS total
      FROM caja_egresos e
      JOIN cajas_turnos t ON t.turno_id = e.turno_id
-     WHERE t.cajero_id = $1 AND t.fecha = ${fecha}`,
-    [cajeroId]
+     WHERE t.cajero_id = $1 AND t.fecha = ${fechaSql}`,
+    parametros
   );
   const gastos = Number(egresos.rows[0].total);
   const ingresos = Number(ventas.rows[0].ingresos);
@@ -92,8 +94,9 @@ export async function obtenerResumenCaja(req, res, next) {
                 efectivo_contado, monto_dejado_caja, diferencia_cierre, observacion_cierre,
                 abierta_en, cerrada_en
          FROM cajas_turnos
-         WHERE cajero_id = $1 AND fecha = ${FECHA_HOY}
-         ORDER BY turno_id DESC LIMIT 1`,
+         WHERE cajero_id = $1 AND (fecha = ${FECHA_HOY} OR cerrada_en IS NULL)
+         ORDER BY (cerrada_en IS NULL) DESC, fecha DESC, turno_id DESC
+         LIMIT 1`,
         [cajeroId]
       ),
       query(
@@ -116,10 +119,9 @@ export async function obtenerResumenCaja(req, res, next) {
       ? await query(
           `SELECT egreso_id, descripcion, valor, creado_en
            FROM caja_egresos
-           WHERE cajero_id = $1
-             AND (creado_en AT TIME ZONE 'America/Bogota')::date = ${FECHA_HOY}
+           WHERE turno_id = $1
            ORDER BY creado_en DESC`,
-          [cajeroId]
+          [actual.turno_id]
         )
       : { rows: [] };
 
@@ -261,7 +263,11 @@ export async function registrarEgreso(req, res, next) {
 export async function cerrarCaja(req, res, next) {
   const efectivoContado = Number(req.body?.efectivo_contado);
   const montoDejado = Number(req.body?.monto_dejado_caja);
+  const turnoId = req.body?.turno_id == null ? null : Number(req.body.turno_id);
   const observacion = texto(req.body?.observacion, 500);
+  if (turnoId !== null && (!Number.isSafeInteger(turnoId) || turnoId <= 0)) {
+    return res.status(400).json({ mensaje: "El turno de caja indicado no es válido." });
+  }
   if (!montoValido(efectivoContado, true)) {
     return res.status(400).json({ mensaje: "Indica cuánto efectivo quedó en la caja." });
   }
@@ -276,11 +282,12 @@ export async function cerrarCaja(req, res, next) {
     await cliente.query("BEGIN");
     const cajeroId = Number(req.user.usuario_id);
     const turno = await cliente.query(
-      `SELECT turno_id, monto_apertura
+      `SELECT turno_id, fecha, monto_apertura
        FROM cajas_turnos
-       WHERE cajero_id = $1 AND fecha = ${FECHA_HOY} AND cerrada_en IS NULL
+       WHERE cajero_id = $1 AND cerrada_en IS NULL
+         AND (($2::bigint IS NULL AND fecha = ${FECHA_HOY}) OR turno_id = $2)
        FOR UPDATE`,
-      [cajeroId]
+      [cajeroId, turnoId]
     );
     if (!turno.rowCount) {
       await cliente.query("ROLLBACK");
@@ -290,7 +297,7 @@ export async function cerrarCaja(req, res, next) {
       turno.rows[0].turno_id,
       cliente
     );
-    const totales = await obtenerTotales(cajeroId, FECHA_HOY, cliente);
+    const totales = await obtenerTotales(cajeroId, turno.rows[0].fecha, cliente);
     const diferencia = efectivoContado - esperado;
     if (Math.abs(diferencia) > 0.01 && !observacion) {
       await cliente.query("ROLLBACK");

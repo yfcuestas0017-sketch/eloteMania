@@ -6,6 +6,15 @@ import { apiFetch } from "../services/api";
 import "./admin.css";
 import "./CashierCashRegister.css";
 
+function fechaCaja(fecha) {
+  if (!fecha) return "esa fecha";
+  return new Date(`${fecha}T12:00:00`).toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+}
+
 export default function CashierCashRegister() {
   const [resumen, setResumen] = useState(null);
   const [inventario, setInventario] = useState(null);
@@ -118,6 +127,7 @@ export default function CashierCashRegister() {
     guardar(
       "/cash-register/cerrar",
       {
+        turno_id: resumen.turno.turno_id,
         efectivo_contado: Number(efectivoContado),
         monto_dejado_caja: Number(montoDejadoCaja),
         observacion: observacionCierre
@@ -289,7 +299,10 @@ export default function CashierCashRegister() {
                       <div>
                         <h2 className="tarjeta-titulo">Cerrar y cuadrar caja</h2>
                         <p className="campo-ayuda">
-                          Cuenta todo el efectivo físico para cuadrar. Luego indica cuánto dejas en caja para mañana; el resto se considera retirado. No incluyas pagos digitales.
+                          {resumen.turno.fecha !== resumen.fecha
+                            ? `Esta caja quedó abierta desde el ${fechaCaja(resumen.turno.fecha)}. Ciérrala para poder abrir la caja de hoy.`
+                            : "Cuenta todo el efectivo físico para cuadrar. Luego indica cuánto dejas en caja para la próxima apertura; el resto se considera retirado."}{" "}
+                          No incluyas pagos digitales.
                         </p>
                       </div>
                     </div>
@@ -311,7 +324,7 @@ export default function CashierCashRegister() {
                       </div>
                       <div className="campo">
                         <label htmlFor="caja-dejado">
-                          Dinero en efectivo que deja en caja para mañana (COP)
+                          Dinero en efectivo que deja en caja para la próxima apertura (COP)
                         </label>
                         <input
                           id="caja-dejado"
