@@ -27,6 +27,7 @@ export default function CashierCashRegister() {
   const [cantidades, setCantidades] = useState({});
   const [observaciones, setObservaciones] = useState({});
   const [observacionCierre, setObservacionCierre] = useState("");
+  const [motivoTardio, setMotivoTardio] = useState("");
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const [cargando, setCargando] = useState(true);
@@ -130,7 +131,8 @@ export default function CashierCashRegister() {
         turno_id: resumen.turno.turno_id,
         efectivo_contado: Number(efectivoContado),
         monto_dejado_caja: Number(montoDejadoCaja),
-        observacion: observacionCierre
+        observacion: observacionCierre,
+        motivo_cierre_tardio: motivoTardio
       },
       "Cierre de caja registrado."
     );
@@ -342,6 +344,23 @@ export default function CashierCashRegister() {
                           {pesos(Math.max(0, (Number(efectivoContado) || 0) - (Number(montoDejadoCaja) || 0)))}.
                         </span>
                       </div>
+                      {resumen.turno.fecha !== resumen.fecha && (
+                        <div className="campo">
+                          <label htmlFor="caja-motivo-tardio">
+                            ¿Por qué no se cerró la caja el {fechaCaja(resumen.turno.fecha)}?
+                          </label>
+                          <textarea
+                            id="caja-motivo-tardio"
+                            className="area-texto"
+                            maxLength="500"
+                            minLength="5"
+                            placeholder="Ej: Se me olvidó cerrar porque salí con prisa."
+                            value={motivoTardio}
+                            onChange={(event) => setMotivoTardio(event.target.value)}
+                            required
+                          />
+                        </div>
+                      )}
                       {Number(efectivoContado) !== Number(resumen.efectivo_esperado) && (
                         <div className="campo">
                           <label htmlFor="caja-observacion">Observación de la diferencia</label>
